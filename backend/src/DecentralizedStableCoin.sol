@@ -1,13 +1,9 @@
-// SPDX-LICENSE-Identifier: MIT
-
 // This is considered an Exogenous, Decentralized, ANchored (pegged), Crypto Collateralized low volitility coin
 
 // Layout of Contract:
-
 // version
 // imports
 // interfaces, libraries, contracts
-
 // errors
 // Type declarations
 // State variables
@@ -25,6 +21,7 @@
 // private
 // view and pure functions
 
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
 // imports the OpenZeppelin's ERC20 implementation with burn functionality
@@ -56,6 +53,7 @@ contract DecentralizedStableCoin is ERC20Burnable, Ownable {
     constructor() ERC20("DecentralizedStableCOin", "DSC") {}
 
     // This function is used to burn the _amount tokens from the msg.sender's balance.
+    // onlyOwner modifier restrict burning to owner (DSCEngine)
     function burn(uint256 _amount) public override onlyOwner {
         uint256 balance = balanceOf(msg.sender);
         // Check if the amount is greater than zero
@@ -66,10 +64,12 @@ contract DecentralizedStableCoin is ERC20Burnable, Ownable {
         if (balance < _amount) {
             revert DecentralizedStableCoin__BurnAmountExceedsBalance();
         }
+        // Calls parent ERC20Burnable's burn function if checks pass
         super.burn(_amount);
     }
 
     // this function is used to mint new tokens and assign them to the _to address
+    // onlyOwner modifier restricts minting to owner (DSCEngine)
     function mint(address _to, uint256 _amount) external onlyOwner returns(bool) { 
         // check if the _to address is valid
         if (_to == address(0)) {
