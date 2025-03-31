@@ -243,17 +243,30 @@ contract DSCEngine is ReentrancyGuard {
     ///////////////////////
     // Private Functions //
     ///////////////////////
-
+    /**
+     * @param amountDscToBurn: The amount of DSC to burn
+     * @param onBehalfOf: those whose debt is being reduce
+     * @param dscFrom: account providing the DSC token (often same as onBehalfOf)
+     * Why? This function handles the burning of the DSC token belonging to a user
+     */
     function _burnDsc(uint256 amountDscToBurn, address onBehalfOf, address dscFrom) private {
+        // decrease the user's minted DSC balance in storage
         s_DSCMinted[onBehalfOf] -= amountDscToBurn;
-
+        // move the dsc from user/burner to engine contract, uses ERC20's transferFrom, requiring prior approval
         bool success = i_dsc.transferFrom(dscFrom, address(this), amountDscToBurn);
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
+        // destroy DSC token currently held by the engine, thus reducing the dsc supply permanently
         i_dsc.burn(amountDscToBurn);
     }
 
+    /**
+     * @param tokenCollateralAddress: The collateral token address that is being redeemed
+     * @param amountCollateral: The ammount that is being withdraw
+     * @param from: Account whose collateral is being reduced
+     * @param to: Recipient of the withdrawn token
+     */
     function _redeemCollateral(
         address tokenCollateralAddress,
         uint256 amountCollateral,
@@ -262,9 +275,13 @@ contract DSCEngine is ReentrancyGuard {
     ) 
         private
     {
+        // decrease the user's collateral balance
         s_collateralDeposited[from][tokenCollateralAddress] -= amountCollateral;
+        // record the event
         emit CollateralRedeemed(from, to, tokenCollateralAddress, amountCollateral);
+        // token transfer, uses ERC20's transfer(not transferFrom)
         bool success = IERC20(tokenCollateralAddress).transfer(to, amountCollateral);
+        // revert the operation if fails
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
