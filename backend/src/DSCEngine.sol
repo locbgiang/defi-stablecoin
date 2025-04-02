@@ -64,6 +64,8 @@ contract DSCEngine is ReentrancyGuard {
     error DSCEngine__TransferFailed();
     error DSCEngine__BreaksHealthFactor(uint256 healthFactor);
     error DSCEngine__MintFailed();
+    error DSCEngine__HealthFactorOk();
+    error DSCEngine__HealthFactorNotImproved();
 
     ///////////
     // Types //
@@ -79,6 +81,7 @@ contract DSCEngine is ReentrancyGuard {
     uint256 private constant ADDTIONAL_FEED_PRECISION = 1e10;
     uint256 private constant PRECISION = 1e18;
     uint256 private constant MIN_HEALTH_FACTOR = 1e18; // 1.0 in 18 decimal precision, below 1.0 means the position is undercollateralized
+    uint256 private constant LIQUIDATION_BONUS = 10; // this means you get assets at a 10% discount when liquidating
 
 
     // @dev Mapping of the token address to the price feed address
@@ -163,7 +166,7 @@ contract DSCEngine is ReentrancyGuard {
      * @param tokenCollateralAddress: the address of the collateral user is getting back
      * @param amountCollateral: the amount of collateral to withdraw
      * @param amountDscToBurn: the amount of dsc to burn
-     * Why? This function burn Dsc and redeem collateral in one function, reducing gas
+     * Why? burn Dsc and redeem collateral in one function, reducing gas
      */
     function redeemCollateralForDsc(
         address tokenCollateralAddress,
@@ -179,11 +182,45 @@ contract DSCEngine is ReentrancyGuard {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
+    /**
+     * @param tokenCollateralAddress: token address of the collateral
+     * @param userBeingLiquidate: address of user being liquidate
+     * @param amountDebtToCover: the amount of debt needed to cover by liquidator
+     */
+    function liquidate(
+        address tokenCollateralAddress, 
+        address userBeingLiquidate, 
+        uint256 amountDebtToCover
+    ) 
+        external 
+        isAllowedToken(tokenCollateralAddress)
+        moreThanZero(amountDebtToCover)
+        nonReentrant
+    {
+        // check user broke health factor
+        uint256 startingUserHealthFactor = _healthFactor(userBeingLiquidate);
+        if (startingUserHealthFactor >= MIN_HEALTH_FACTOR) {
+            revert DSCEngine__HealthFactorOk();
+        }
+    
+        uint256 tokenAmountFromDebtCovered = getTokenAmountFromUsd(tokenCollateralAddress, amountDebtToCover);
+        uint256 bonusCollateral = (tokenAmountFromDebtCovered * LIQUIDATION_BONUS) / LIQUIDATION_PRECISION;
+        // liquidator gets the collateral token
+        _redeemCollateral(tokenCollateralAddress, tokenAmountFromDebtCovered + bonusCollateral, userBeingLiquidate, msg.sender);
+        // liquidator pays the debt for the user being liquidated
+        _burnDsc(amountDebtToCover, userBeingLiquidate, msg.sender);
+
+        // check if the liquidated hf improved
+        uint256 endingUserHealthFactor = _healthFactor(userBeingLiquidate);
+        if (endingUserHealthFactor <= startingUserHealthFactor) {
+            revert DSCEngine__HealthFactorNotImproved();
+        }
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
+
     // function redeemCollateral() {}
 
     // function burnDsc() {}
-
-    // function liquidate() {}
 
     //////////////////////
     // Public Functions //
@@ -246,18 +283,15 @@ contract DSCEngine is ReentrancyGuard {
     /**
      * @param amountDscToBurn: The amount of DSC to burn
      * @param onBehalfOf: those whose debt is being reduce
-     * @param dscFrom: account providing the DSC token (often same as onBehalfOf)
+     * @param dscFrom: account providing the DSC token (often same as onBehalfOf), also the liquidator providing dsc to liquidate someone
      * Why? This function handles the burning of the DSC token belonging to a user
      */
     function _burnDsc(uint256 amountDscToBurn, address onBehalfOf, address dscFrom) private {
-        // decrease the user's minted DSC balance in storage
         s_DSCMinted[onBehalfOf] -= amountDscToBurn;
-        // move the dsc from user/burner to engine contract, uses ERC20's transferFrom, requiring prior approval
         bool success = i_dsc.transferFrom(dscFrom, address(this), amountDscToBurn);
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
-        // destroy DSC token currently held by the engine, thus reducing the dsc supply permanently
         i_dsc.burn(amountDscToBurn);
     }
 
@@ -266,6 +300,7 @@ contract DSCEngine is ReentrancyGuard {
      * @param amountCollateral: The ammount that is being withdraw
      * @param from: Account whose collateral is being reduced
      * @param to: Recipient of the withdrawn token
+     * why? take the collateral token and transfer to user.
      */
     function _redeemCollateral(
         address tokenCollateralAddress,
@@ -275,13 +310,9 @@ contract DSCEngine is ReentrancyGuard {
     ) 
         private
     {
-        // decrease the user's collateral balance
         s_collateralDeposited[from][tokenCollateralAddress] -= amountCollateral;
-        // record the event
         emit CollateralRedeemed(from, to, tokenCollateralAddress, amountCollateral);
-        // token transfer, uses ERC20's transfer(not transferFrom)
         bool success = IERC20(tokenCollateralAddress).transfer(to, amountCollateral);
-        // revert the operation if fails
         if (!success) {
             revert DSCEngine__TransferFailed();
         }
@@ -384,6 +415,12 @@ contract DSCEngine is ReentrancyGuard {
     /////////////////////////////////////////////
     // External & Public View & Pure functions //
     /////////////////////////////////////////////
+
+    function getTokenAmountFromUsd(address token, uint256 usdAmountInWei) public view returns(uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return ((usdAmountInWei * PRECISION) / (uint256(price) * ADDTIONAL_FEED_PRECISION));
+    }
     
     /**
      * @param user: The address of the user whose total collateral value we're evaluating
@@ -400,8 +437,6 @@ contract DSCEngine is ReentrancyGuard {
     // function getUsdValue() {}
 
     // function getCollateralBalanceOfUser() {}
-
-    // function getTokenAmountFromUsd() {}
 
     // function getPrecision() {}
 
