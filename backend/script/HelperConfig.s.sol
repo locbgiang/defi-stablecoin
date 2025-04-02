@@ -46,7 +46,7 @@ contract HelperConfig is Script {
         });
     }
 
-    functaion getOrCreateAnvilEthConfig() public view returns(NetworkConfig memory anvilNetworkConfig) {
+    function getOrCreateAnvilEthConfig() public returns(NetworkConfig memory anvilNetworkConfig) {
         // check to see if we set an active network config
         if(activeNetworkConfig.wethUsdPriceFeed != address(0)){
             return activeNetworkConfig;
@@ -57,7 +57,7 @@ contract HelperConfig is Script {
         ERC20Mock wethMock = new ERC20Mock("WETH", "WETH", msg.sender, 1000e8);
 
         MockV3Aggregator btcUsdPriceFeed = new MockV3Aggregator(DECIMALS, BTC_USD_PRICE);
-        ERC20Mock wbtcMock = new ERC20Mock("WBTC", "WBTC", msg.sender, 1000e8)
+        ERC20Mock wbtcMock = new ERC20Mock("WBTC", "WBTC", msg.sender, 1000e8);
 
         anvilNetworkConfig = NetworkConfig({
             wethUsdPriceFeed: address(ethUsdPriceFeed), // ETH / USD
@@ -65,6 +65,6 @@ contract HelperConfig is Script {
             weth: address(wethMock),
             wbtc: address(wbtcMock),
             deployerKey: DEFAULT_ANVIL_PRIVATE_KEY
-        })
+        });
     }
 }
