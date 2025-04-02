@@ -218,9 +218,32 @@ contract DSCEngine is ReentrancyGuard {
         _revertIfHealthFactorIsBroken(msg.sender);
     }
 
-    // function redeemCollateral() {}
+    /**
+     * @param tokenCollateralAddress: the address of the token to be redeemed
+     * @param amountCollateral: the amount of token to be redeemed
+     * why? this is the external function that will call the private _redeemCollateral function
+     */
+    function redeemCollateral(
+        address tokenCollateralAddress, 
+        uint256 amountCollateral
+    ) 
+        external
+        isAllowedToken(tokenCollateralAddress)
+        moreThanZero(amountCollateral)
+        nonReentrant
+    {
+        _redeemCollateral(tokenCollateralAddress, amountCollateral, msg.sender, msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender);
+    }
 
-    // function burnDsc() {}
+    /**
+     * @param amount: the amount of dsc to burn
+     * why? this is the external function to call the private _burnDsc function
+     */
+    function burnDsc(uint256 amount) external moreThanZero(amount) {
+        _burnDsc(amount, msg.sender, msg.sender);
+        _revertIfHealthFactorIsBroken(msg.sender); // i dont think this is ever going to hit.
+    }
 
     //////////////////////
     // Public Functions //
@@ -280,6 +303,7 @@ contract DSCEngine is ReentrancyGuard {
     ///////////////////////
     // Private Functions //
     ///////////////////////
+
     /**
      * @param amountDscToBurn: The amount of DSC to burn
      * @param onBehalfOf: those whose debt is being reduce
@@ -376,7 +400,6 @@ contract DSCEngine is ReentrancyGuard {
     }
 
     /**
-     * 
      * @param token: the address of the ERC20 collateral token
      * @param amount: the quantity of the token
      */
