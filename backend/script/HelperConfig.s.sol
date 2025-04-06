@@ -11,12 +11,6 @@ import { ERC20Mock } from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
  * @notice This contract is to help decide which chain we are working on.
  */
 contract HelperConfig is Script {
-    NetworkConfig public activeNetworkConfig;
-
-    uint8 public constant DECIMALS = 8;
-    int256 public constant ETH_USD_PRICE = 2000e8;
-    int256 public constant BTC_USD_PRICE = 1000e8;
-
     // struct of network data
     struct NetworkConfig {
         address wethUsdPriceFeed;
@@ -26,10 +20,16 @@ contract HelperConfig is Script {
         uint256 deployerKey;
     }
 
+    NetworkConfig public activeNetworkConfig;
+
+    uint8 public constant DECIMALS = 8;
+    int256 public constant ETH_USD_PRICE = 2000e8;
+    int256 public constant BTC_USD_PRICE = 3000e8;
+
     uint256 public DEFAULT_ANVIL_PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     constructor () {
-        if (block.chainid == 11_155_111) {
+        if (block.chainid == 11155111) { 
             activeNetworkConfig = getSepoliaEthConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilEthConfig();
@@ -58,6 +58,7 @@ contract HelperConfig is Script {
 
         MockV3Aggregator btcUsdPriceFeed = new MockV3Aggregator(DECIMALS, BTC_USD_PRICE);
         ERC20Mock wbtcMock = new ERC20Mock("WBTC", "WBTC", msg.sender, 1000e8);
+        vm.stopBroadcast();
 
         anvilNetworkConfig = NetworkConfig({
             wethUsdPriceFeed: address(ethUsdPriceFeed), // ETH / USD

@@ -78,7 +78,7 @@ contract DSCEngine is ReentrancyGuard {
 
     uint256 private constant LIQUIDATION_THRESHOLD = 50;
     uint256 private constant LIQUIDATION_PRECISION = 100;
-    uint256 private constant ADDTIONAL_FEED_PRECISION = 1e10;
+    uint256 private constant ADDITIONAL_FEED_PRECISION = 1e10;
     uint256 private constant PRECISION = 1e18;
     uint256 private constant MIN_HEALTH_FACTOR = 1e18; // 1.0 in 18 decimal precision, below 1.0 means the position is undercollateralized
     uint256 private constant LIQUIDATION_BONUS = 10; // this means you get assets at a 10% discount when liquidating
@@ -128,7 +128,7 @@ contract DSCEngine is ReentrancyGuard {
 
     constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) {
         if (tokenAddresses.length != priceFeedAddresses.length) {
-            revert DSCEngine__TokenNotAllowed();
+            revert DSCEngine__TokenAddressesAndPriceFeedAddressesAmountDontMatch();
         }
 
         // these feeds will be the USD pair
@@ -409,7 +409,7 @@ contract DSCEngine is ReentrancyGuard {
         // get price data from pricefeed
         (, int256 price,,,) = priceFeed.latestRoundData();
         // return the USD value
-        return ((uint256(price) * ADDTIONAL_FEED_PRECISION) * amount) / PRECISION;
+        return ((uint256(price) * ADDITIONAL_FEED_PRECISION) * amount) / PRECISION;
     }
 
     /**
@@ -439,11 +439,19 @@ contract DSCEngine is ReentrancyGuard {
     // External & Public View & Pure functions //
     /////////////////////////////////////////////
 
-    function getTokenAmountFromUsd(address token, uint256 usdAmountInWei) public view returns(uint256) {
+    function getTokenAmountFromUsd(address token, uint256 usdAmount) public view returns(uint256) {
+        uint256 usdAmountInWei = usdAmount * PRECISION; // PRECISION = 1e18
         AggregatorV3Interface priceFeed = AggregatorV3Interface(s_priceFeeds[token]);
+        // price of weth (2000e8 local) or wbtc (1000e8 local)
         (, int256 price,,,) = priceFeed.latestRoundData();
-        return ((usdAmountInWei * PRECISION) / (uint256(price) * ADDTIONAL_FEED_PRECISION));
+        // (usdAmount * 1e18) / (price * 1e10)
+        return (usdAmountInWei) / (uint256(price) * ADDITIONAL_FEED_PRECISION);
     }
+
+    function getUsdValue(address token, uint256 amount) external view returns(uint256) {
+        return _getUsdValue(token, amount);
+    }
+
     
     /**
      * @param user: The address of the user whose total collateral value we're evaluating

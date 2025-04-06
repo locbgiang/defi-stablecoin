@@ -3,6 +3,13 @@ pragma solidity 0.8.19;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+/**
+ * @title ERC20Mock
+ * @author Loc Giang
+ * @notice This contract is a mock of the ERC20 token standard. 
+ * Used for testing purposes.
+ */
+
 contract ERC20Mock is ERC20 {
     constructor(
         string memory name,
