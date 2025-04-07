@@ -25,6 +25,7 @@ contract DSCEngineTest is Test {
     address user = address(1);
 
     uint256 public constant STARTING_USER_BALANCE = 100 ether;
+    uint256 public amountCollateral = 10 ether;
     
 
     /**
@@ -39,7 +40,7 @@ contract DSCEngineTest is Test {
         (dsc, dsce, helperConfig) = deployer.run();
 
         // Gets the network specific config
-        (ethUsdPriceFeed, btcUsdPriceFeed, wbtc, weth, deployerKey) = helperConfig.activeNetworkConfig();
+        (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, deployerKey) = helperConfig.activeNetworkConfig();
 
         // Set up the balances
         if (block.chainid == 31_337) {
@@ -109,8 +110,6 @@ contract DSCEngineTest is Test {
 
     /**
      * Why? This test checks that DSCEngine.depositCollateral() reverts with the correct custom error when token's TransferFrom fails.
-     * This is crucial for security as we need to ensure the contract properly handles failed token transfers
-     * and doesn't allow users to deposit collateral that wasn't actually transferred.
      */
     function testRevertsIfTransferFromFails() public {
         // act as owner and deploy a mock ERC20 token that fails on transferFrom()
@@ -149,6 +148,10 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * Why? This test checks that DSCEngine.depositCollateral() reverts with the correct custom error when the collateral amount is zero.
+     * DSCEngine__AmountMustBeMoreThanZero is in the modifier of the function
+     */
     function testRevertsIfCollateralZero() public {
         vm.startPrank(user);
         vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
@@ -156,15 +159,54 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    // function testRevertsWithUnapprovedCollateral() public {}
+    /**
+     * Why? This test checks that DSCEngine.depositCollateral() reverts with the correct custom error when the collateral token is not allowed.
+     * DSCEngine__TokenNotAllowed is in the modifier of the function
+     */
+    function testRevertsWithUnapprovedCollateral() public {
+        ERC20Mock randomToken = new ERC20Mock("Random Token", "RT", msg.sender, 100 ether);
+        vm.startPrank(user);
+        vm.expectRevert(DSCEngine.DSCEngine__TokenNotAllowed.selector);
+        dsce.depositCollateral(address(randomToken), 100 ether);
+        vm.stopPrank();
+    }
 
-    // modifier depositedCollateral() {
-    //     _;
-    // }
+    /**
+     * Why? This modifier deposits collateral to the user
+     */
+    modifier depositedCollateral() {
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
+        dsce.depositCollateral(weth, amountCollateral);
+        vm.stopPrank();
+        _;
+    }
 
-    // function testCanDepositCollateralWithoutMinting() public {}
+    /**
+     * Why? this test checks if user can deposit without minting any DSC
+     */
+    function testCanDepositCollateralWithoutMinting() public depositedCollateral {
+        // user should not have any DSC minted
+        uint256 userBalance = dsc.balanceOf(user);
+        assertEq(userBalance, 0);
+    }
 
-    // function testCanDepositedCollateralAndGetAccountInfo() public depositedCollateral {}
+    /**
+     * why? this test checks if user can get account information
+     * grab the collateral value in usd and then compare it to the deposited amount
+     */
+    function testCanDepositedCollateralAndGetAccountInfo() public depositedCollateral {
+        // totalDscMinted should be 0, we have not minted any dsc yet
+        // collateralValueInUsd = 10 ether (deposited) * 2000 (price of weth) = 20000e18 (e18 because price is in wei)
+        (uint256 totalDscMinted, uint256 collateralValueInUsd) = dsce.getAccountInformation(user);
+
+        // call getTokenAmountFromUsd to get amount of ether, input is 20000e18
+        uint256 expectedDepositedAmount = dsce.getTokenAmountFromUsd(weth, collateralValueInUsd);
+
+        assertEq(totalDscMinted, 0);
+        // 10e18 and 10e18
+        assertEq(expectedDepositedAmount, amountCollateral);
+    }
 
 
     // ///////////////////////////////////////

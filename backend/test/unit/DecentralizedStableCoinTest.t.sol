@@ -12,6 +12,14 @@ contract DecentralizedStableCoinTest is StdCheats, Test {
         dsc = new DecentralizedStableCoin();
     }
 
+    function testBurn() public {
+        vm.startPrank(dsc.owner());
+        dsc.mint(address(this), 100 ether);
+        dsc.burn(50 ether);
+        vm.stopPrank();
+        assertEq(dsc.balanceOf(address(this)), 50 ether);
+    }
+
     function testMustMintMoreThanZero() public {
         vm.prank(dsc.owner());
         vm.expectRevert();

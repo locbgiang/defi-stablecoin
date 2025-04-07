@@ -117,7 +117,7 @@ contract DSCEngine is ReentrancyGuard {
     // @dev This modifier checks that the token is allowed
     modifier isAllowedToken(address token) {
         if (s_priceFeeds[token]== address(0)){
-            revert DSCEngine__TokenAddressesAndPriceFeedAddressesAmountDontMatch();
+            revert DSCEngine__TokenNotAllowed();
         }
         _;
     }
@@ -452,6 +452,10 @@ contract DSCEngine is ReentrancyGuard {
         return _getUsdValue(token, amount);
     }
 
+    function getAccountInformation(address user) public view returns(uint256 totalDscMinted, uint256 collateralValueInUsd) {
+        return _getAccountInformation(user);
+    }
+
     
     /**
      * @param user: The address of the user whose total collateral value we're evaluating
@@ -462,8 +466,6 @@ contract DSCEngine is ReentrancyGuard {
     // }
 
     // function calculateHealthFactor() {}
-
-    // function getAccountInformation() {}
 
     // function getUsdValue() {}
 
