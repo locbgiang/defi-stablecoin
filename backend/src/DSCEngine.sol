@@ -456,6 +456,18 @@ contract DSCEngine is ReentrancyGuard {
         return _getAccountInformation(user);
     }
 
+    function getAdditionalFeedPrecision() public pure returns(uint256) {
+        return ADDITIONAL_FEED_PRECISION;
+    }
+
+    function getPrecision() public pure returns(uint256) {
+        return PRECISION;
+    }
+
+    function getHealthFactor(address user) public view returns(uint256) {
+        return _healthFactor(user);
+    }
+
     
     /**
      * @param user: The address of the user whose total collateral value we're evaluating
@@ -471,10 +483,6 @@ contract DSCEngine is ReentrancyGuard {
 
     // function getCollateralBalanceOfUser() {}
 
-    // function getPrecision() {}
-
-    // function getAdditionalFeedPrecision() {}
-
     // function getLiquidationThreshold() {}
 
     // function getLiquidationBonus() {}
@@ -488,6 +496,4 @@ contract DSCEngine is ReentrancyGuard {
     // function getDsc() {}
 
     // function getCollateralTokenPriceFeed() {}
-
-    // function getHealthFactor() {}
 }

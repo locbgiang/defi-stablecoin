@@ -8,6 +8,7 @@ import { DSCEngine } from "../../src/DSCEngine.sol";
 import { HelperConfig } from "../../script/HelperConfig.s.sol";
 import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 import { MockFailedTransferFrom } from "../mocks/MockFailedTransferFrom.sol";
+import { MockV3Aggregator } from "../mocks/MockV3Aggregator.sol";
 
 contract DSCEngineTest is Test {
 
@@ -212,8 +213,29 @@ contract DSCEngineTest is Test {
     // ///////////////////////////////////////
     // // depositCollateralAndMintDsc Tests //
     // ///////////////////////////////////////
+    
+    /**
+     * why? this test is trying to mint dsc equal to full value of collateral
+     * this breaks the health factor because the contract only allows to mint 50% of the collateral value
+     */
+    function testRevertsIfMintedDscBreaksHealthFactor() public {
+        // get the latest price of eth, 2000e8
+        (,int256 price,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
 
-    // function testRevertsIfMintedDscBreaksHealthFactor() public {}
+        // calculate how much dsc we can mint if we deposit 10 ether
+        // 10e18 (amountCollateral)
+        // 2000e8 (price from chainlink) * 1e10 (addtionalFeedPrecision) / 1e18 (getPrecision)= 2,000
+        // 10e18 * 2000 = 20,000e18 (20k usd)
+        uint256 amountToMint = (amountCollateral * (uint256(price) * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+
+        // vm.startPrank(user);
+        // ERC20Mock(weth).approve(address(dsce), amountCollateral);
+
+        // uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(weth, amountCollateral));
+        // vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+        // dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        // vm.stopPrank();
+    }
 
     // modifier depositedCollateralAndMintedDsc() {
     //     _;
