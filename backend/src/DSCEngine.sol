@@ -356,6 +356,7 @@ contract DSCEngine is ReentrancyGuard {
         uint256 userHealthFactor = _healthFactor(user);
 
         // compares it against the system's minimum requirement
+        // MIN_HEALTH_FACTOR = 1e18
         if(userHealthFactor < MIN_HEALTH_FACTOR) {
             // reverts with a descriptive error if unsafe
             revert DSCEngine__BreaksHealthFactor(userHealthFactor);

@@ -26,7 +26,8 @@ contract DSCEngineTest is Test {
     address user = address(1);
 
     uint256 public constant STARTING_USER_BALANCE = 100 ether;
-    uint256 public amountCollateral = 10 ether;
+    uint256 amountCollateral = 10 ether;
+    uint256 amountToMint = 100 ether;
     
 
     /**
@@ -250,17 +251,30 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    // modifier depositedCollateralAndMintedDsc() {
-    //     _;
-    // }
+    modifier depositedCollateralAndMintedDsc() {
+        // simulate actions as if they are being performed by user
+        // user approves the DSCEngine to spend their weth
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
 
-    // function testCanMintWithDepositedCollateral() public depositedCollateralAndMintedDsc {}
+        // user calls depositCollateralAndMintDsc
+        // deposit 10 eth (10 ether) and mint 100 dsc (100 ether? it just works like that)
+        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
+        _;
+    }
+
+    function testCanMintWithDepositedCollateral() public depositedCollateralAndMintedDsc {
+        // user should have 100 dsc minted
+        uint256 userBalance = dsc.balanceOf(user);
+        assertEq(userBalance, amountToMint);
+    }
 
     // ///////////////////
     // // mintDsc Tests //
     // ///////////////////
 
-    // function testRevertsIfMintFails() public {}
+    //function testRevertsIfMintFails() public {}
 
     // function testRevertsIfMintAmountIsZero() public {}
 
