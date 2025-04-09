@@ -219,7 +219,8 @@ contract DSCEngineTest is Test {
      * this breaks the health factor because the contract only allows to mint 50% of the collateral value
      */
     function testRevertsIfMintedDscBreaksHealthFactor() public {
-        // get the latest price of eth, 2000e8
+        // get the latest price of eth (2000e8). 
+        //MockV3Aggregator is a mock contract that returns a fixed price
         (,int256 price,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
 
         // calculate how much dsc we can mint if we deposit 10 ether
@@ -227,14 +228,26 @@ contract DSCEngineTest is Test {
         // 2000e8 (price from chainlink) * 1e10 (addtionalFeedPrecision) / 1e18 (getPrecision)= 2,000
         // 10e18 * 2000 = 20,000e18 (20k usd)
         uint256 amountToMint = (amountCollateral * (uint256(price) * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+        
+        // simulates actions as if they are being performed by the user
+        vm.startPrank(user);
+        // type cast weth to ERC20Mock, allows to use approve, transfer, and transferFrom ect.
+        // the user approves the DSCEngine to spend their weth
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
 
-        // vm.startPrank(user);
-        // ERC20Mock(weth).approve(address(dsce), amountCollateral);
+        // calculate collateral value in usd
+        // 10e18 (amountCollateral) * 2000 (price) = 20,000e18 (20k usd)
+        uint256 collateralValueInUsd = dsce.getUsdValue(weth, amountCollateral);
 
-        // uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(weth, amountCollateral));
-        // vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
-        // dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
-        // vm.stopPrank();
+        // calculate the health factor of the user
+        // input: 20,000e18 dsc, 20000e18 collateral
+        // should = 0.5e18
+        uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, collateralValueInUsd);
+
+        // expect the function to revert with the expected health factor
+        vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
     }
 
     // modifier depositedCollateralAndMintedDsc() {
