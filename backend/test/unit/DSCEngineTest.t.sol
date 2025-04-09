@@ -6,9 +6,12 @@ import { DeployDSC } from "../../script/DeployDSC.s.sol";
 import { DecentralizedStableCoin } from "../../src/DecentralizedStableCoin.sol";
 import { DSCEngine } from "../../src/DSCEngine.sol";
 import { HelperConfig } from "../../script/HelperConfig.s.sol";
+
 import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 import { MockFailedTransferFrom } from "../mocks/MockFailedTransferFrom.sol";
 import { MockV3Aggregator } from "../mocks/MockV3Aggregator.sol";
+import { MockFailedMintDSC } from "../mocks/MockFailedMintDSC.sol";
+
 
 contract DSCEngineTest is Test {
 
@@ -274,7 +277,24 @@ contract DSCEngineTest is Test {
     // // mintDsc Tests //
     // ///////////////////
 
-    //function testRevertsIfMintFails() public {}
+    function testRevertsIfMintFails() public {
+        // arrange - setup
+        MockFailedMintDSC mockDsc = new MockFailedMintDSC();
+        tokenAddresses = [weth];
+        feedAddresses = [ethUsdPriceFeed];
+        address owner = msg.sender;
+        vm.prank(owner);
+        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        mockDsc.transferOwnership(address(mockDsce));
+        
+        // arrange - user
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(mockDsce), amountCollateral);
+
+        vm.expectRevert(DSCEngine.DSCEngine__MintFailed.selector);
+        mockDsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
+    }
 
     // function testRevertsIfMintAmountIsZero() public {}
 
