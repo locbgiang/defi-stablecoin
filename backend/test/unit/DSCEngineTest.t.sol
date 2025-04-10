@@ -278,16 +278,22 @@ contract DSCEngineTest is Test {
     // ///////////////////
 
     function testRevertsIfMintFails() public {
-        // arrange - setup
+        // MockFailedMintDSC is DecentralizedStableCoin but returns false
         MockFailedMintDSC mockDsc = new MockFailedMintDSC();
+
+        // these are for the constructor of DSCEngine
         tokenAddresses = [weth];
         feedAddresses = [ethUsdPriceFeed];
+
+        // store the address of the entity that is executing the test
+        // it is used to set up the test environment and ensure that the necessary permissions and interactions are correctly configured
         address owner = msg.sender;
         vm.prank(owner);
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
         mockDsc.transferOwnership(address(mockDsce));
         
-        // arrange - user
+        // simulate actions as if they are being performed by the user
+        // user approves the DSCEngine to spend their weth
         vm.startPrank(user);
         ERC20Mock(weth).approve(address(mockDsce), amountCollateral);
 
@@ -296,17 +302,55 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    // function testRevertsIfMintAmountIsZero() public {}
+    function testRevertsIfMintAmountIsZero() public {
+        // user deposits 10 ether and mints 100 dsc
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
+        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
 
-    // function testRevertsIfMintAmountBreaksHealthFactor() public {}
+        // user is going to try and mint 0 dsc after
+        vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
+        dsce.mintDsc(0);
+        vm.stopPrank();
+    }
 
-    // function testCanMintDsc() public depositedCollateral {}
+    function testRevertsIfMintAmountBreaksHealthFactor() public depositedCollateral {
+        // grab price
+        (, int256 price ,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
+
+        // find amount to mint
+        // 10e18 * 2000e8 * 1e10 / 1e18 = 20,000e18
+        uint256 amountToMint = (amountCollateral * (uint256(price)  * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+
+        // find expected health factor
+        uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(weth,amountCollateral));
+        
+        // expect revert
+        vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
+        vm.startPrank(user);
+        dsce.mintDsc(amountToMint);
+        vm.stopPrank();
+    }
+
+    function testCanMintDsc() public depositedCollateral {
+        // user already deposited collateral from modifier
+        vm.startPrank(user);
+        dsce.mintDsc(amountToMint);
+
+        uint256 userBalance = dsc.balanceOf(user);
+        assertEq(userBalance, amountToMint);
+    }
 
     // ///////////////////
     // // burnDsc Tests //
     // ///////////////////
 
-    // function testRevertsIfBurnAmountIsZero() public {}
+    function testRevertsIfBurnAmountIsZero() public {
+        vm.startPrank(user);
+        vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
+        dsce.burnDsc(0);
+        vm.stopPrank();
+    }
 
     // function testCantBurnMoreThanUserHas() public {}
 

@@ -4,6 +4,12 @@ pragma solidity 0.8.19;
 import { ERC20Burnable, ERC20 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title MockFailedMintDSC
+ * @author Loc Giang
+ * @notice This contract is a mock of the DecentralizedStableCoin contract
+ * everything is the same except the mint function, which return false
+ */
 contract MockFailedMintDSC is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();
     error DecentralizedStableCoin__BurnAmountExceedsBalance();
