@@ -254,6 +254,9 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * Why? This modifier deposits collateral and mints dsc
+     */
     modifier depositedCollateralAndMintedDsc() {
         // simulate actions as if they are being performed by user
         // user approves the DSCEngine to spend their weth
@@ -267,8 +270,11 @@ contract DSCEngineTest is Test {
         _;
     }
 
+    /**
+     * Why? this test checks if the modifier works
+     */
     function testCanMintWithDepositedCollateral() public depositedCollateralAndMintedDsc {
-        // user should have 100 dsc minted
+        // user should have 100 dsc minted from modifier
         uint256 userBalance = dsc.balanceOf(user);
         assertEq(userBalance, amountToMint);
     }
@@ -277,6 +283,9 @@ contract DSCEngineTest is Test {
     // // mintDsc Tests //
     // ///////////////////
 
+    /**
+     * Why? this test checks if the function reverts if the mint fails
+     */
     function testRevertsIfMintFails() public {
         // MockFailedMintDSC is DecentralizedStableCoin but returns false
         MockFailedMintDSC mockDsc = new MockFailedMintDSC();
@@ -302,6 +311,9 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * Why? This test checks if the function reverts if the mint amount is zero
+     */
     function testRevertsIfMintAmountIsZero() public {
         // user deposits 10 ether and mints 100 dsc
         vm.startPrank(user);
@@ -314,6 +326,9 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * Why? This test check if the function reverts if the mint amount breaks the health factor
+     */
     function testRevertsIfMintAmountBreaksHealthFactor() public depositedCollateral {
         // grab price
         (, int256 price ,,,) = MockV3Aggregator(ethUsdPriceFeed).latestRoundData();
@@ -332,6 +347,9 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * Why? This test checks if the function can mint dsc
+     */
     function testCanMintDsc() public depositedCollateral {
         // user already deposited collateral from modifier
         vm.startPrank(user);
@@ -345,6 +363,9 @@ contract DSCEngineTest is Test {
     // // burnDsc Tests //
     // ///////////////////
 
+    /**
+     * Why? This test checks if the function reverts if user tries to burn 0 dsc
+     */
     function testRevertsIfBurnAmountIsZero() public {
         vm.startPrank(user);
         vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
@@ -352,9 +373,31 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    // function testCantBurnMoreThanUserHas() public {}
+    /**
+     * Why? This test checks if user burns more than they have
+     */
+    function testCantBurnMoreThanUserHas() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        vm.expectRevert();
+        dsce.burnDsc(amountToMint + 1);
+        vm.stopPrank();
+    }
 
-    // function testCanBurnDsc() public depositedCollateralAndMintedDsc {}
+    /**
+     * 
+     */
+    function testCanBurnDsc() public depositedCollateralAndMintedDsc {
+        // actions by user
+        vm.startPrank(user);
+        // approve the DSCEngine to spend the user's DSC tokens, then burn the dsc 
+        // amountToMint is 100 dsc (from modifier)
+        ERC20Mock(address(dsc)).approve(address(dsce), amountToMint);
+        dsce.burnDsc(amountToMint);
+
+        // assert that the user's DSC balance is 0
+        uint256 userBalance = dsc.balanceOf(user);
+        assertEq(userBalance, 0);
+    }
 
     // ////////////////////////////
     // // redeemCollateral Tests //
