@@ -384,7 +384,7 @@ contract DSCEngineTest is Test {
     }
 
     /**
-     * 
+     * Why? This test checks if the user can burn their dsc
      */
     function testCanBurnDsc() public depositedCollateralAndMintedDsc {
         // actions by user
@@ -403,7 +403,44 @@ contract DSCEngineTest is Test {
     // // redeemCollateral Tests //
     // ////////////////////////////
 
-    // function testRevertsIfTransferFails() public {}
+    function testRevertsIfTransferFails() public {
+        // mock a token that return fail on transferFrom
+        MockFailedTransferFrom mockDsc = new MockFailedTransferFrom();
+
+        // these are for the constructor of DSCEngine
+        tokenAddresses = [weth];
+        feedAddresses = [ethUsdPriceFeed];
+
+        address owner = msg.sender;
+        vm.prank(owner);
+        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        mockDsc.transferOwnership(address(mockDsce));
+
+        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        
+        // function testRevertsIfTransferFails() public {
+        // // Arrange - Setup
+        // address owner = msg.sender;
+        // vm.prank(owner);
+        // MockFailedTransfer mockDsc = new MockFailedTransfer();
+        // tokenAddresses = [address(mockDsc)];
+        // feedAddresses = [ethUsdPriceFeed];
+        // vm.prank(owner);
+        // DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        // mockDsc.mint(user, amountCollateral);
+
+        // vm.prank(owner);
+        // mockDsc.transferOwnership(address(mockDsce));
+        // // Arrange - User
+        // vm.startPrank(user);
+        // ERC20Mock(address(mockDsc)).approve(address(mockDsce), amountCollateral);
+        // // Act / Assert
+        // mockDsce.depositCollateral(address(mockDsc), amountCollateral);
+        // vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        // mockDsce.redeemCollateral(address(mockDsc), amountCollateral);
+        // vm.stopPrank();
+    }
+    }
 
     // function testRevertsIfRedeemAmountIsZero() public {}
 
