@@ -455,14 +455,17 @@ contract DSCEngineTest is Test {
      * This test checks if the function can redeem collateral
      */
     function testCanRedeemCollateral() public depositedCollateral {
+        // arrange: start prank as user
         vm.startPrank(user);
-        // check starting collateral balance from modifier
-        uint256 startingCollateralBalance = ERC20Mock(weth).balanceOf(user);
+        // sanity check: check starting collateral balance from modifier
+        uint256 startingCollateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
         assertEq(startingCollateralBalance, amountCollateral);
 
+        // act: redeem collateral
         dsce.redeemCollateral(address(weth), amountCollateral);
-        // check collateral balance after redeem
-        uint256 collateralBalance = ERC20Mock(weth).balanceOf(user);
+
+        // assert: check collateral balance after redeem
+        uint256 collateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
         assertEq(collateralBalance, 0);
         vm.stopPrank();
     }
