@@ -408,32 +408,27 @@ contract DSCEngineTest is Test {
      * This test is checking that the redeemCollateral function properly handles transfer failures
      */
     function testRevertsIfTransferFails() public {
-        // 1. setup (arrange)
+        // set up mock erc20 dsc token that will fail on transfer
         address owner = msg.sender;
         vm.prank(owner);
-        // creates a mock fail transfer token that will fail on transfer 
         MockFailedTransfer mockDsc = new MockFailedTransfer();
-        
+
         // set up array for DSCEngine constructor
+        // deploy a new dscengine with the mock token
         tokenAddresses = [address(mockDsc)];
         feedAddresses = [ethUsdPriceFeed];
-
-        // deploys a new dscengine with the mock token
         vm.prank(owner);
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
         
         // mint some mock tokens to the user
-        mockDsc.mint(user, amountCollateral);
-
         // transfer ownership of the mock token to the dscengine
+        mockDsc.mint(user, amountCollateral);
         vm.prank(owner);
         mockDsc.transferOwnership(address(mockDsce));
 
-        // 2. user actions (arrange)
         // switches to the user context
+        // approve the dscengine to spend the user's mock token
         vm.startPrank(user);
-
-        // approves the dscengine to spend the user's mock token
         ERC20Mock(address(mockDsc)).approve(address(mockDsce), amountCollateral);
 
         // 3. test execution (act/assert)
@@ -446,12 +441,38 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * This test checks if the function reverts if the redeem amount is zero
+     */
+    function testRevertsIfRedeemAmountIsZero() public depositedCollateral {
+        vm.startPrank(user);
+        vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
+        dsce.redeemCollateral(address(weth), 0);
+        vm.stopPrank();
+    }
 
-    // function testRevertsIfRedeemAmountIsZero() public {}
+    /**
+     * This test checks if the function can redeem collateral
+     */
+    function testCanRedeemCollateral() public depositedCollateral {
+        vm.startPrank(user);
+        // check starting collateral balance from modifier
+        uint256 startingCollateralBalance = ERC20Mock(weth).balanceOf(user);
+        assertEq(startingCollateralBalance, amountCollateral);
 
-    // function testCanRedeemCollateral() public depositedCollateral {}
+        dsce.redeemCollateral(address(weth), amountCollateral);
+        // check collateral balance after redeem
+        uint256 collateralBalance = ERC20Mock(weth).balanceOf(user);
+        assertEq(collateralBalance, 0);
+        vm.stopPrank();
+    }
 
-    // function testEmitCollateralRedeemedWithCorrectArgs() public depositedCollateral {}
+    /**
+     * This test checks if the function emits the correct event
+     */
+    function testEmitCollateralRedeemedWithCorrectArgs() public depositedCollateral {
+        
+    }
 
     // //////////////////////////////////
     // // redeemCollateralForDsc Tests //
