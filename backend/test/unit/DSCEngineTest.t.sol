@@ -11,6 +11,7 @@ import { ERC20Mock } from "../mocks/ERC20Mock.sol";
 import { MockFailedTransferFrom } from "../mocks/MockFailedTransferFrom.sol";
 import { MockV3Aggregator } from "../mocks/MockV3Aggregator.sol";
 import { MockFailedMintDSC } from "../mocks/MockFailedMintDSC.sol";
+import { MockFailedTransfer } from "../mocks/MockFailedTransfer.sol";
 
 
 contract DSCEngineTest is Test {
@@ -403,44 +404,48 @@ contract DSCEngineTest is Test {
     // // redeemCollateral Tests //
     // ////////////////////////////
 
+    /**
+     * This test is checking that the redeemCollateral function properly handles transfer failures
+     */
     function testRevertsIfTransferFails() public {
-        // mock a token that return fail on transferFrom
-        MockFailedTransferFrom mockDsc = new MockFailedTransferFrom();
-
-        // these are for the constructor of DSCEngine
-        tokenAddresses = [weth];
-        feedAddresses = [ethUsdPriceFeed];
-
+        // 1. setup (arrange)
         address owner = msg.sender;
         vm.prank(owner);
+        // creates a mock fail transfer token that will fail on transfer 
+        MockFailedTransfer mockDsc = new MockFailedTransfer();
+        
+        // set up array for DSCEngine constructor
+        tokenAddresses = [address(mockDsc)];
+        feedAddresses = [ethUsdPriceFeed];
+
+        // deploys a new dscengine with the mock token
+        vm.prank(owner);
         DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        
+        // mint some mock tokens to the user
+        mockDsc.mint(user, amountCollateral);
+
+        // transfer ownership of the mock token to the dscengine
+        vm.prank(owner);
         mockDsc.transferOwnership(address(mockDsce));
 
-        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
-        
-        // function testRevertsIfTransferFails() public {
-        // // Arrange - Setup
-        // address owner = msg.sender;
-        // vm.prank(owner);
-        // MockFailedTransfer mockDsc = new MockFailedTransfer();
-        // tokenAddresses = [address(mockDsc)];
-        // feedAddresses = [ethUsdPriceFeed];
-        // vm.prank(owner);
-        // DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
-        // mockDsc.mint(user, amountCollateral);
+        // 2. user actions (arrange)
+        // switches to the user context
+        vm.startPrank(user);
 
-        // vm.prank(owner);
-        // mockDsc.transferOwnership(address(mockDsce));
-        // // Arrange - User
-        // vm.startPrank(user);
-        // ERC20Mock(address(mockDsc)).approve(address(mockDsce), amountCollateral);
-        // // Act / Assert
-        // mockDsce.depositCollateral(address(mockDsc), amountCollateral);
-        // vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
-        // mockDsce.redeemCollateral(address(mockDsc), amountCollateral);
-        // vm.stopPrank();
+        // approves the dscengine to spend the user's mock token
+        ERC20Mock(address(mockDsc)).approve(address(mockDsce), amountCollateral);
+
+        // 3. test execution (act/assert)
+        // deposits collateral
+        mockDsce.depositCollateral(address(mockDsc), amountCollateral); 
+        // expects a revert with dsceengine__transferfailed
+        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        // attempts to redeem collateral
+        mockDsce.redeemCollateral(address(mockDsc), amountCollateral);
+        vm.stopPrank();
     }
-    }
+
 
     // function testRevertsIfRedeemAmountIsZero() public {}
 

@@ -4,6 +4,11 @@ pragma solidity 0.8.19;
 import { ERC20Burnable, ERC20 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title MockFailedTransferFrom
+ * @author Loc Giang
+ * @notice This contract is a ERC20 mock token that will fail on transferFrom
+ */
 contract MockFailedTransferFrom is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();
     error DecentralizedStableCoin__BurnAmountExceedsBalance();
