@@ -34,8 +34,11 @@ contract DSCEngineTest is Test {
     uint256 public constant STARTING_USER_BALANCE = 100 ether;
     uint256 amountCollateral = 10 ether;
     uint256 amountToMint = 100 ether;
-    
 
+    // liquidator
+    address public liquidator = makeAddr("liquidator");
+    uint256 public collateralToCover = 20 ether;
+    
     /**
      * Deploying the contract
      * Getting network/mocked configs
@@ -561,11 +564,45 @@ contract DSCEngineTest is Test {
     // ///////////////////////
 
     function testMustImproveHealthFactorOnLiquidation() public {
+        // Create a mock DSC that allows more debt
+        // MockMoreDebtDSC designed to crash the price to 0 when DSC is burned
+        // this is why the liquidation fails, it would make health factor worse not better
         MockMoreDebtDSC mockDsc = new MockMoreDebtDSC(ethUsdPriceFeed);
+        // setup DSCEngine with weth and it's price feed
+        tokenAddresses = [weth];
+        feedAddresses = [ethUsdPriceFeed];
+        address owner = msg.sender;
+        vm.prank(owner);
+        DSCEngine mockDsce = new DSCEngine(tokenAddresses, feedAddresses, address(mockDsc));
+        mockDsc.transferOwnership(address(mockDsce));
 
+        // user deposit 10 eth ($2000 each) and mints 100 dollars of dsc
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(mockDsce), amountCollateral);
+        mockDsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
+
+        // liquidator deposits 1 eth (still $2000 dollars each) and mints 100 dsc
+        collateralToCover = 1 ether;
+        ERC20Mock(weth).mint(liquidator, collateralToCover);  
+        vm.startPrank(liquidator);
+        ERC20Mock(weth).approve(address(mockDsce),collateralToCover);   
+        mockDsce.depositCollateralAndMintDsc(weth, collateralToCover, amountToMint);    
+        uint256 debtToCover = 10 ether;
+        mockDsc.approve(address(mockDsce), debtToCover);    // this prepares the liquidator to cover some of the user's debt
+
+        // price of eth crashes to $18, thus the user health factor is now .9
+        // 10 eth = $180, if we divide it by half is $90 which is not enough to cover 100 dsc
+        int256 ethUsdUpdatedPrice = 18e8; // 1 eth = $18
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdUpdatedPrice);
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorNotImproved.selector);
+        mockDsce.liquidate(weth, user, debtToCover);
+        vm.stopPrank();
     }
 
-    // function testCantLiquidateGoodHealthFactor() public {}
+    function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
+        
+    }
 
     // modifier liquidated() {
     //     _;
