@@ -500,9 +500,31 @@ contract DSCEngineTest is Test {
     // // redeemCollateralForDsc Tests //
     // //////////////////////////////////
 
-    // function testMustRedeemMoreThanZero() public depositedCollateralAndMintedDsc {}
+    function testMustRedeemMoreThanZero() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        dsc.approve(address(dsce), amountToMint);
+        vm.expectRevert(DSCEngine.DSCEngine__AmountMustBeMoreThanZero.selector);
+        dsce.redeemCollateralForDsc(address(weth), 0, amountToMint);
+        vm.stopPrank();
+    }
 
-    // function testCanRedeemDepositedCollateral() public {}
+    function testCanRedeemDepositedCollateral() public depositedCollateralAndMintedDsc {
+        vm.startPrank(user);
+        // sanity check for modifier
+        uint256 startingCollateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
+        uint256 startingDscBalance = dsc.balanceOf(user);
+        assertEq(startingCollateralBalance, amountCollateral);
+        assertEq(startingDscBalance, amountToMint);
+
+        // 
+        dsc.approve(address(dsce), amountToMint);
+        dsce.redeemCollateralForDsc(address(weth), amountCollateral, amountToMint);
+        uint256 endCollateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
+        uint256 endDscBalance = dsc.balanceOf(user);
+        assertEq(endCollateralBalance, 0);
+        assertEq(endDscBalance, 0);
+        vm.stopPrank();
+    }
 
     // ////////////////////////
     // // healthFactor Tests //
