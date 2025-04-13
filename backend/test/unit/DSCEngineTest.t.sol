@@ -15,7 +15,8 @@ import { MockFailedTransfer } from "../mocks/MockFailedTransfer.sol";
 
 
 contract DSCEngineTest is Test {
-
+    event CollateralRedeemed(address indexed redeemFrom, address indexed redeemTo, address token, uint256 amount); // if
+        // redeemFrom != redeemedTo, then it was liquidated
     DecentralizedStableCoin dsc;
     DSCEngine dsce;
     HelperConfig helperConfig;
@@ -474,7 +475,25 @@ contract DSCEngineTest is Test {
      * This test checks if the function emits the correct event
      */
     function testEmitCollateralRedeemedWithCorrectArgs() public depositedCollateral {
+        // This tells foundry to expect an event to be emitted with these exact parameters
+        // The 4 'true' values mean we want to check all 4 indexed paramters of the event
+        vm.expectEmit(true, true, true, true, address(dsce));
+
+        // This is the event we expect to be emitted, with these exact parameters:
+        // - user (from): who is redeeming the collateral
+        // - user (to): who is receiving the collateral (could be a liquidator)
+        // - token: the address of the token being redeemed
+        // - amount: the amount of the collateral token being redeemed
+        emit CollateralRedeemed(user, user, address(weth), amountCollateral);
         
+        // start acting as user
+        vm.startPrank(user);
+
+        // call the function that should emit the event
+        dsce.redeemCollateral(address(weth), amountCollateral);
+
+        // stop acting as the user
+        vm.stopPrank();
     }
 
     // //////////////////////////////////
