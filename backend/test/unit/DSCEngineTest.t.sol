@@ -12,6 +12,7 @@ import { MockFailedTransferFrom } from "../mocks/MockFailedTransferFrom.sol";
 import { MockV3Aggregator } from "../mocks/MockV3Aggregator.sol";
 import { MockFailedMintDSC } from "../mocks/MockFailedMintDSC.sol";
 import { MockFailedTransfer } from "../mocks/MockFailedTransfer.sol";
+import { MockMoreDebtDSC } from "../mocks/MockMoreDebtDSC.sol";
 
 
 contract DSCEngineTest is Test {
@@ -513,16 +514,25 @@ contract DSCEngineTest is Test {
         // sanity check for modifier
         uint256 startingCollateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
         uint256 startingDscBalance = dsc.balanceOf(user);
+        uint256 startingWethBalanceOfUser = ERC20Mock(weth).balanceOf(user);
+
         assertEq(startingCollateralBalance, amountCollateral);
         assertEq(startingDscBalance, amountToMint);
+        assertEq(startingWethBalanceOfUser, STARTING_USER_BALANCE - amountCollateral);
 
-        // 
+        // approve the DSCEngine to spend the user's dsc
+        // act, redeem collateral for dsc
         dsc.approve(address(dsce), amountToMint);
         dsce.redeemCollateralForDsc(address(weth), amountCollateral, amountToMint);
+        
+        // assert that the balances are correct
         uint256 endCollateralBalance = dsce.getCollateralBalanceOfUser(user, address(weth));
         uint256 endDscBalance = dsc.balanceOf(user);
+        uint256 endWethBalanceOfUser = ERC20Mock(weth).balanceOf(user);
+
         assertEq(endCollateralBalance, 0);
         assertEq(endDscBalance, 0);
+        assertEq(endWethBalanceOfUser, STARTING_USER_BALANCE);
         vm.stopPrank();
     }
 
@@ -530,15 +540,30 @@ contract DSCEngineTest is Test {
     // // healthFactor Tests //
     // ////////////////////////
 
-    // function testProperlyReportsHealthFactor() public depositedCollateralAndMintedDsc {}
+    function testProperlyReportsHealthFactor() public depositedCollateralAndMintedDsc {
+        uint256 expectedHealthFactor = 100 ether;
+        uint256 actualHealthFactor = dsce.getHealthFactor(user);
 
-    // function testHealthFactorCanGoBelowOne() public {}
+        assertEq(actualHealthFactor, expectedHealthFactor);
+    }
+
+    function testHealthFactorCanGoBelowOne() public depositedCollateralAndMintedDsc{
+        int256 ethUsdPrice = 18e8;
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdPrice);
+        
+        uint256 userHealthFactor = dsce.getHealthFactor(user);
+
+        assert(userHealthFactor == 0.9 ether);
+    }
 
     // ///////////////////////
     // // Liquidation Tests //
     // ///////////////////////
 
-    // function testMustImproveHealthFactorOnLiquidation() public {}
+    function testMustImproveHealthFactorOnLiquidation() public {
+        MockMoreDebtDSC mockDsc = new MockMoreDebtDSC(ethUsdPriceFeed);
+
+    }
 
     // function testCantLiquidateGoodHealthFactor() public {}
 
