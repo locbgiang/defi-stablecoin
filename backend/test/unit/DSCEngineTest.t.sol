@@ -600,8 +600,21 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * This test verifies a user with good health factor (>1) cannot be liquidated
+     */
     function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
+        // set up
+        ERC20Mock(weth).mint(liquidator, collateralToCover);
+        vm.startPrank(liquidator);
+        ERC20Mock(weth).approve(address(dsce), collateralToCover);
+        dsce.depositCollateralAndMintDsc(weth, collateralToCover, amountToMint);
+        dsc.approve(address(dsce), amountToMint);
         
+        // attempt liquidation
+        vm.expectRevert(DSCEngine.DSCEngine__HealthFactorOk.selector);
+        dsce.liquidate(weth, user, amountToMint);
+        vm.stopPrank();
     }
 
     // modifier liquidated() {

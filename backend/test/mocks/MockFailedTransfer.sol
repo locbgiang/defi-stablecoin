@@ -7,7 +7,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title MockFailedTransfer
  * @author Loc Giang
- * @notice This contract is a ERC20 mock token that will fail on transfer
+ * @notice This contract is a ERC20 mock DSC token that will fail on transfer
  */
 contract MockFailedTransfer is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();

@@ -29,16 +29,12 @@ import { ERC20Burnable, ERC20 } from "@openzeppelin/contracts/token/ERC20/extens
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { MockV3Aggregator } from "./MockV3Aggregator.sol";
 
-/*
- * @title DecentralizedStableCoin
- * @author Patrick Collins
- * Collateral: Exogenous
- * Minting (Stability Mechanism): Decentralized (Algorithmic)
- * Value (Relative Stability): Anchored (Pegged to USD)
- * Collateral Type: Crypto
- *
-* This is the contract meant to be owned by DSCEngine. It is a ERC20 token that can be minted and burned by the
-DSCEngine smart contract.
+/**
+ * @title MockMoreDebtDSC
+ * @author Loc Giang
+ * @notice This contract is a mock of the DSC token
+ * it crashes the price of ETH to 0 when the burn function is called
+ * @dev This contract is used for testing purposes only
  */
 contract MockMoreDebtDSC is ERC20Burnable, Ownable {
     error DecentralizedStableCoin__AmountMustBeMoreThanZero();
