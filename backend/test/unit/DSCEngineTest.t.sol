@@ -652,11 +652,25 @@ contract DSCEngineTest is Test {
     }
 
     function testUserStillHasSomeEthAfterLiquidation() public liquidated {
-        // check the user's balance after liquidation
-        uint256 userWethBalance = ERC20Mock(weth).balanceOf(user);
-        uint256 expectedUserWethBalance = dsce.getTokenAmountFromUsd(weth, amountToMint) 
-            - (dsce.getTokenAmountFromUsd(weth, amountToMint) * dsce.getLiquidationBonus() / dsce.getLiquidationPrecision());
-            assertEq(userWethBalance, expectedUserWethBalance);
+        // get how much weth the user lost
+        uint256 flatAmountLiquidated = dsce.getTokenAmountFromUsd(weth, amountToMint);
+        uint256 bonusAmountLiquidated = (dsce.getTokenAmountFromUsd(weth,amountToMint) * dsce.getLiquidationBonus()) 
+            / dsce.getLiquidationPrecision();
+        uint256 amountLiquidated = flatAmountLiquidated + bonusAmountLiquidated;
+
+        // convert liquidated weth to usd value
+        uint256 usdAmountLiquidated = dsce.getUsdValue(weth, amountLiquidated);
+
+        // calculate expected remaining collateral value in usd
+        // original collateral value - liquidated amount
+        uint256 expectedUserCollateralValueInUsd = dsce.getUsdValue(weth, amountCollateral) - usdAmountLiquidated;
+
+        // get the actual user user's remaining collateral
+        (, uint256 userCollateralValueInUsd ) = dsce.getAccountInformation(user);
+        uint256 hardCodedExpectedValue = 70_000_000_000_000_000_020; // ~$70
+
+        assertEq(userCollateralValueInUsd, expectedUserCollateralValueInUsd);
+        assertEq(userCollateralValueInUsd, hardCodedExpectedValue);
     }
 
     // function testLiquidatorTakesOnUsersDebt() public liquidated {}
