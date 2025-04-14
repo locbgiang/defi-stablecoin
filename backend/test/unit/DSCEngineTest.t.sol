@@ -14,7 +14,6 @@ import { MockFailedMintDSC } from "../mocks/MockFailedMintDSC.sol";
 import { MockFailedTransfer } from "../mocks/MockFailedTransfer.sol";
 import { MockMoreDebtDSC } from "../mocks/MockMoreDebtDSC.sol";
 
-
 contract DSCEngineTest is Test {
     event CollateralRedeemed(address indexed redeemFrom, address indexed redeemTo, address token, uint256 amount); // if
         // redeemFrom != redeemedTo, then it was liquidated
@@ -604,7 +603,8 @@ contract DSCEngineTest is Test {
      * This test verifies a user with good health factor (>1) cannot be liquidated
      */
     function testCantLiquidateGoodHealthFactor() public depositedCollateralAndMintedDsc {
-        // set up
+        // set up for liquidator
+        // liquidator needs dsc to liquidate :)
         ERC20Mock(weth).mint(liquidator, collateralToCover);
         vm.startPrank(liquidator);
         ERC20Mock(weth).approve(address(dsce), collateralToCover);
@@ -617,11 +617,37 @@ contract DSCEngineTest is Test {
         vm.stopPrank();
     }
 
-    // modifier liquidated() {
-    //     _;
-    // }
+    modifier liquidated() {
+        // set up user 
+        vm.startPrank(user);
+        ERC20Mock(weth).approve(address(dsce), amountCollateral);
+        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        vm.stopPrank();
 
-    // function testLiquidationPayoutIsCorrect() public liquidated {}
+        // crash the price
+        int256 ethUsdUpdatedPrice = 18e8; // 1 eth = $18
+        MockV3Aggregator(ethUsdPriceFeed).updateAnswer(ethUsdUpdatedPrice);
+
+        // set up liquidator
+        ERC20Mock(weth).mint(liquidator, collateralToCover);
+        vm.startPrank(liquidator);
+        ERC20Mock(weth).approve(address(dsce), collateralToCover);
+        dsce.depositCollateralAndMintDsc(weth, collateralToCover, amountToMint);
+        dsc.approve(address(dsce), amountToMint);
+
+        // attempt liquidation
+        dsce.liquidate(weth, user, amountToMint);
+        vm.stopPrank();
+        _;
+    }
+
+    function testLiquidationPayoutIsCorrect() public liquidated {
+        // check the liquidator's balance after liquidation
+        uint256 liquidatorWethBalance = ERC20Mock(weth).balanceOf(liquidator);
+        uint256 expectedLiquidatorWethBalance = dsce.getTokenAmountFromUsd(weth, amountToMint)
+            + (dsce.getTokenAmountFromUsd(weth, amountToMint) * dsce.getLiquidationBonus() / dsce.getLiquidationPrecision());
+        assertEq(liquidatorWethBalance, expectedLiquidatorWethBalance);
+    }
 
     // function testUserStillHasSomeEthAfterLiquidation() public liquidated {}
 
