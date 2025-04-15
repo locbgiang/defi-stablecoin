@@ -673,7 +673,10 @@ contract DSCEngineTest is Test {
         assertEq(userCollateralValueInUsd, hardCodedExpectedValue);
     }
 
-    // function testLiquidatorTakesOnUsersDebt() public liquidated {}
+    function testLiquidatorTakesOnUsersDebt() public liquidated {
+        (uint256 liquidatorDscMinted, ) = dsce.getAccountInformation(liquidator); 
+        assertEq(liquidatorDscMinted, amountToMint);
+    }
 
     // function testUserHasNoMoreDebt() public liquidated {}
 
