@@ -487,6 +487,22 @@ contract DSCEngine is ReentrancyGuard {
         return LIQUIDATION_PRECISION;
     }
 
+    function getCollateralTokenPriceFeed(address feed) public view returns(address) {
+        return s_priceFeeds[feed];
+    }
+
+    function getCollateralTokens() public view returns(address[] memory) {
+        return s_collateralTokens;
+    }
+
+    function getMinHealthFactor() public pure returns(uint256) {
+        return MIN_HEALTH_FACTOR;
+    }
+
+    function getLiquidationThreshold() public pure returns(uint256) {
+        return LIQUIDATION_THRESHOLD;
+    }
+
     /**
      * @param user: The address of the user whose total collateral value we're evaluating
      * This public view of the function that returns the total collateral of a user
@@ -497,13 +513,5 @@ contract DSCEngine is ReentrancyGuard {
 
     // function getUsdValue() {}
 
-    // function getLiquidationThreshold() {}
-
-    // function getMinHealthFactor() {}
-
-    // function getCollateralTokens() {}
-
     // function getDsc() {}
-
-    // function getCollateralTokenPriceFeed() {}
 }

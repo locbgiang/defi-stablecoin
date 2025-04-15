@@ -687,13 +687,26 @@ contract DSCEngineTest is Test {
     // // View & Pure Function Tests //
     // ////////////////////////////////
 
-    // function testGetCollateralTokenPriceFeed() public {}
+    function testGetCollateralTokenPriceFeed() public view {
+        address priceFeed = dsce.getCollateralTokenPriceFeed(weth);
+        assertEq(priceFeed, ethUsdPriceFeed);
+    }
 
-    // function testGetCollateralToken() public {}
+    function testGetCollateralTokens() public view {
+        address[] memory tokens = dsce.getCollateralTokens();
+        assertEq(tokens[0], weth);
+        assertEq(tokens[1], wbtc);
+    }
 
-    // function testGetMinHealthFactor() public {}
+    function testGetMinHealthFactor() public view {
+        uint256 minHealthFactor = dsce.getMinHealthFactor();
+        assertEq(minHealthFactor, 1 ether);
+    }
 
-    // function testGetLiquidationThreshold() public {}
+    function testGetLiquidationThreshold() public view {
+        uint256 liquidationThreshold = dsce.getLiquidationThreshold();
+        assertEq(liquidationThreshold, 0.5 ether);
+    }
 
     // function testGetAccountCollateralValueFromInformation() public depositedCollateral {}
 
