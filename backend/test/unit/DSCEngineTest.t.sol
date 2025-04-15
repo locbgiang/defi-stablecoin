@@ -678,7 +678,10 @@ contract DSCEngineTest is Test {
         assertEq(liquidatorDscMinted, amountToMint);
     }
 
-    // function testUserHasNoMoreDebt() public liquidated {}
+    function testUserHasNoMoreDebt() public liquidated {
+        (uint256 userDscMinted, ) = dsce.getAccountInformation(user);
+        assertEq(userDscMinted, 0);
+    }
 
     // ////////////////////////////////
     // // View & Pure Function Tests //
