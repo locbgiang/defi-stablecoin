@@ -503,15 +503,13 @@ contract DSCEngine is ReentrancyGuard {
         return LIQUIDATION_THRESHOLD;
     }
 
-    /**
-     * @param user: The address of the user whose total collateral value we're evaluating
-     * This public view of the function that returns the total collateral of a user
-     */
-    // function getAccountCollateralValue(address user) public view returns(uint256) {
-    //     return _getAccountCollateralValue(user);
-    // }
+    function getAccountCollateralValue(address user) public view returns(uint256) {
+        return _getAccountCollateralValue(user);
+    }
+
+    function getDsc() public view returns(address) {
+        return address(i_dsc);
+    }
 
     // function getUsdValue() {}
-
-    // function getDsc() {}
 }

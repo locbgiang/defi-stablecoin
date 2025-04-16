@@ -106,7 +106,7 @@ contract DSCEngineTest is Test {
     /**
      * Why? this function is the reverse of the previous one, testing input eth amount output USD amount
      */
-    function testGetUsdValue() public {
+    function testGetUsdValue() public view {
         uint256 expectedUsd = 30_000 ether;
         uint256 inputEth = 15 ether;
 
@@ -236,7 +236,7 @@ contract DSCEngineTest is Test {
         // 10e18 (amountCollateral)
         // 2000e8 (price from chainlink) * 1e10 (addtionalFeedPrecision) / 1e18 (getPrecision)= 2,000
         // 10e18 * 2000 = 20,000e18 (20k usd)
-        uint256 amountToMint = (amountCollateral * (uint256(price) * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+        uint256 amountToMintLocal = (amountCollateral * (uint256(price) * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
         
         // simulates actions as if they are being performed by the user
         vm.startPrank(user);
@@ -251,11 +251,11 @@ contract DSCEngineTest is Test {
         // calculate the health factor of the user
         // input: 20,000e18 dsc, 20000e18 collateral
         // should = 0.5e18
-        uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, collateralValueInUsd);
+        uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMintLocal, collateralValueInUsd);
 
         // expect the function to revert with the expected health factor
         vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
-        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMint);
+        dsce.depositCollateralAndMintDsc(weth, amountCollateral, amountToMintLocal);
         vm.stopPrank();
     }
 
@@ -340,7 +340,7 @@ contract DSCEngineTest is Test {
 
         // find amount to mint
         // 10e18 * 2000e8 * 1e10 / 1e18 = 20,000e18
-        uint256 amountToMint = (amountCollateral * (uint256(price)  * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
+        uint256 amountToMintLocal = (amountCollateral * (uint256(price)  * dsce.getAdditionalFeedPrecision())) / dsce.getPrecision();
 
         // find expected health factor
         uint256 expectedHealthFactor = dsce.calculateHealthFactor(amountToMint, dsce.getUsdValue(weth,amountCollateral));
@@ -348,7 +348,7 @@ contract DSCEngineTest is Test {
         // expect revert
         vm.expectRevert(abi.encodeWithSelector(DSCEngine.DSCEngine__BreaksHealthFactor.selector, expectedHealthFactor));
         vm.startPrank(user);
-        dsce.mintDsc(amountToMint);
+        dsce.mintDsc(amountToMintLocal);
         vm.stopPrank();
     }
 
@@ -705,16 +705,33 @@ contract DSCEngineTest is Test {
 
     function testGetLiquidationThreshold() public view {
         uint256 liquidationThreshold = dsce.getLiquidationThreshold();
-        assertEq(liquidationThreshold, 0.5 ether);
+        assertEq(liquidationThreshold, 50);
     }
 
-    // function testGetAccountCollateralValueFromInformation() public depositedCollateral {}
+    function testGetAccountCollateralValueFromInformation() public depositedCollateral {
+        (, uint256 collateralUsdValue) = dsce.getAccountInformation(user);
+        uint256 expectedCollateralValue = dsce.getUsdValue(weth, amountCollateral);
+        assertEq(collateralUsdValue, expectedCollateralValue);
+    }
 
-    // function testGetCollateralBalanceOfUser() public {}
+    function testGetCollateralBalanceOfUser() public depositedCollateral {
+        uint256 collateralBalance = dsce.getCollateralBalanceOfUser(user, weth);
+        assertEq(collateralBalance, amountCollateral);
+    }
 
-    // function testGetAccountCollateralValue() public {}
+    function testGetAccountCollateralValue() public depositedCollateral {
+        uint256 collateralValue = dsce.getAccountCollateralValue(user);
+        uint256 expectedCollateralValue = dsce.getUsdValue(weth, amountCollateral);
+        assertEq(collateralValue, expectedCollateralValue);
+    }
 
-    // function testGetDsc() public {}
+    function testGetDsc() public view {
+        address dscAddress = dsce.getDsc();
+        assertEq(dscAddress, address(dsc));
+    }
 
-    // function testLiquidationPrecision() public {}
+    function testLiquidationPrecision() public view {
+        uint256 liquidationPrecision = dsce.getLiquidationPrecision();
+        assertEq(liquidationPrecision, 100);
+    }
 }
