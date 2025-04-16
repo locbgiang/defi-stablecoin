@@ -479,11 +479,11 @@ contract DSCEngine is ReentrancyGuard {
         return s_collateralDeposited[user][token];
     }
 
-    function getLiquidationBonus() public view returns(uint256) {
+    function getLiquidationBonus() public pure returns(uint256) {
         return LIQUIDATION_BONUS;
     }
     
-    function getLiquidationPrecision() public view returns(uint256) {
+    function getLiquidationPrecision() public pure returns(uint256) {
         return LIQUIDATION_PRECISION;
     }
 
