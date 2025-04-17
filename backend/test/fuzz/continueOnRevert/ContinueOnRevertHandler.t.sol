@@ -37,4 +37,56 @@ contract ContinueOnRevertHandler {
             dsce.getCollateralTokenPriceFeed(address(wbtc))
         );
     }
+
+    // Functions to interact with
+
+    ///////////////
+    // DSCEngine //
+    ///////////////
+
+    funtion mintAndDepositCollateral (uint256 collateralSeed, uint256 amountCollateral) {
+        // bound the collateral amount to prevent overflow
+        amountCollateral = bound(amountCollateral, 1, MAX_DEPOSIT_SIZE);
+
+        // get either weth or wbtc based on the seed
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+
+        // mint the collateral tokens to the caller
+        collateral.mint(address(this), amountCollateral);
+
+        // deposit the collateral into the dsc engine
+        dsce.depositCollateral(address(collateral), amountCollateral);
+    }
+
+    // function redeemCollateral () {}
+
+    // function burnDsc () {}
+
+    // function mintDsc () {}
+
+    // function liquidate () {}
+
+    /////////////////////////////
+    // DecentralizedStableCoin //    // funtion mintAndDepositCollateral () {}
+
+    // function redeemCollateral () {}
+
+    // function burnDsc () {}
+
+    // function mintDsc () {}
+
+    // function liquidate () {} 
+    /////////////////////////////
+
+    // function transferDsc () {}
+
+    ////////////////
+    // Aggregator //
+    ////////////////
+
+    // function updateCollateralPrice () {}
+
+    // function _getCollateralFromSeed () {}
+
+    // function callSummary () {}
 }
