@@ -59,7 +59,7 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
         uint256 wbtcUsdValue = dsce.getUsdValue(wbtc, wbtcDeposited);
 
         // assert that wethUsdValue + wbtcUsdValue >= totalSupply
-        assertEq(wethUsdValue + wbtcUsdValue >= totalSupply);
+        assert(wethUsdValue + wbtcUsdValue >= totalSupply);
     }
 
     function invariant_callSummary() public view {

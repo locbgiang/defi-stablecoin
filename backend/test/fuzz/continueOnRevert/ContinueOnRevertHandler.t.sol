@@ -69,29 +69,69 @@ contract ContinueOnRevertHandler is Test {
         dsce.redeemCollateral(address(collateral), amountCollateral);
     }
 
-    // function burnDsc () {}
+ 
+    // input: burn how many?
+    function burnDsc (uint256 amountDsc) public {
+        // bound the input amount to prevent overflow
+        amountDsc = bound(amountDsc, 0, dsc.balanceOf(address(msg.sender)));
 
-    // function mintDsc () {}
+        // bunr the dsc tokens
+        dsc.burn(amountDsc);
+    }
 
-    // function liquidate () {}
+    // input: mint how many?
+    function mintDsc (uint256 amountToMint) public {
+        // bound the input amount to prevent overflow
+        amountToMint = bound(amountToMint, 0, MAX_DEPOSIT_SIZE);
+        
+        // mint the dsc tokens
+        dsc.mint(address(msg.sender), amountToMint);
+    }
+
+    // input: liquidate how many?
+    function liquidate (
+        uint256 collateralSeed, 
+        address userToBeLiquidated, 
+        uint256 debtToCover
+    ) 
+        public 
+    {
+        // bound the input amount to prevent overflow
+        debtToCover = bound(debtToCover, 0, dsc.balanceOf(userToBeLiquidated));
+
+        // select the collateral token based on the seed
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+
+        // call the engine to liquidate the user
+        dsce.liquidate(userToBeLiquidated, address(collateral), debtToCover);
+    }
 
     /////////////////////////////
-    // DecentralizedStableCoin //    // funtion mintAndDepositCollateral () {}
-
-    // function redeemCollateral () {}
-
-    // function burnDsc () {}
-
-    // function mintDsc () {}
-
-    // function liquidate () {} 
+    // DecentralizedStableCoin //    
     /////////////////////////////
 
-    // function transferDsc () {}
+    function transferDsc (
+        uint256 amountToTransfer, 
+        address to
+    ) 
+        public 
+    {
+        // bound the input amount to prevent overflow
+        amountToTransfer = bound(amountToTransfer, 0, dsc.balanceOf(address(msg.sender)));
+
+        vm.prank(msg.sender);
+        dsc.transfer(to, amountToTransfer);
+    }
 
     ////////////////
     // Aggregator //
     ////////////////
+
+    function callSummary() external view {
+        console.log("Weth total deposited", weth.balanceOf(address(dsce)));
+        console.log("Wbtc total deposited", wbtc.balanceOf(address(dsce)));
+        console.log("Total supply of DSC", dsc.totalSupply());
+    }
 
     function _getCollateralFromSeed (
         uint256 collateralSeed
@@ -107,7 +147,18 @@ contract ContinueOnRevertHandler is Test {
         }
     }
 
-    // function updateCollateralPrice () {}
+    function updateCollateralPrice (
+        uint256, /* newPrice */ 
+        uint256 collateralSeed
+    ) 
+        public 
+    {
+        int256 intNewPrice = 0;
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+        MockV3Aggregator priceFeed = MockV3Aggregator(
+            dsce.getCollateralTokenPriceFeed(address(collateral))
+        );
 
-    // function callSummary () {}
+        priceFeed.updateAnswer(intNewPrice);
+    }
 }
