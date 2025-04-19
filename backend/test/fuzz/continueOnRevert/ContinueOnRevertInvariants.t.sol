@@ -12,6 +12,14 @@ import { ContinueOnRevertHandler } from "./ContinueOnRevertHandler.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { StdInvariant } from "forge-std/StdInvariant.sol";
 
+/**
+ * @title ContinueOnRevertInvariants
+ * @author Loc Giang
+ * @notice This is the main test contract
+ * 1. Sets up the testing environment
+ * 2. Defines invariants (properties that must always be true)
+ * 3. Randomly selects functions from the handler
+ */
 contract ContinueOnRevertInvariants is StdInvariant, Test {
     // deploy contracts to interact with
     DSCEngine public dsce;
@@ -46,6 +54,8 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
         targetContract(address(handler));
     }
 
+    // defines invariants (properties that must always be true)
+    // ensures the protocol always has enough collateral to back all minted stablecoin
     function invariant_protocolMustHaveMoreValueThanTotalSupplyDollars() public view {
         // getting the total supply
         uint256 totalSupply = dsc.totalSupply();
@@ -62,6 +72,7 @@ contract ContinueOnRevertInvariants is StdInvariant, Test {
         assert(wethUsdValue + wbtcUsdValue >= totalSupply);
     }
 
+    // logs results via callSummary
     function invariant_callSummary() public view {
         handler.callSummary();
     }

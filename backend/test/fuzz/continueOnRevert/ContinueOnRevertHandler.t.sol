@@ -10,6 +10,12 @@ import { DecentralizedStableCoin } from "../../../src/DecentralizedStableCoin.so
 import { MockV3Aggregator } from "../../mocks/MockV3Aggregator.sol";
 import { ERC20Mock } from "../../mocks/ERC20Mock.sol";
 
+/**
+ * @title ContinueOnRevertHandler
+ * @author Loc Giang
+ * @notice This is the handler contract
+ * it provides functions for the fuzzer to call randomly.
+ */
 contract ContinueOnRevertHandler is Test {
     // deploy contracts to interact with
     DSCEngine public dsce;
@@ -158,7 +164,6 @@ contract ContinueOnRevertHandler is Test {
         MockV3Aggregator priceFeed = MockV3Aggregator(
             dsce.getCollateralTokenPriceFeed(address(collateral))
         );
-
         priceFeed.updateAnswer(intNewPrice);
     }
 }
