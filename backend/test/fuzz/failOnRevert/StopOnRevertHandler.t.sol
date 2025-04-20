@@ -55,7 +55,20 @@ contract StopOnRevertHandler is Test {
         vm.stopPrank();
     }
 
-    
+    function redeemCollateral(uint256 collateralSeed, uint256 amountCollateral) public {
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+        uint256 maxCollateral = dsce.getCollateralBalanceOfUser(msg.sender, address(collateral));
+
+        amountCollateral = bound(amountCollateral, 0, MAX_DEPOSIT_SIZE);
+
+        if (amountCollateral == 0) {
+            return;
+        }
+
+        vm.prank(msg.sender);
+        dsce.redeemCollateral(address(collateral), amountCollateral);
+    }
+
 
     ///////////////////////////
     // Stablecoin Operations //
