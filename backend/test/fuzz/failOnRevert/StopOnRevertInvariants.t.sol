@@ -44,7 +44,7 @@ contract StopOnRevertInvariants is StdInvariant, Test {
         (ethUsdPriceFeed, btcUsdPriceFeed, weth, wbtc, ) = helperConfig.activeNetworkConfig();
 
         // create and target handler
-        handler = new StopOnRevertHandler();
+        handler = new StopOnRevertHandler(dsce, dsc);
         targetContract(address(handler));
     }
 
