@@ -59,7 +59,7 @@ contract StopOnRevertHandler is Test {
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
         uint256 maxCollateral = dsce.getCollateralBalanceOfUser(msg.sender, address(collateral));
 
-        amountCollateral = bound(amountCollateral, 0, MAX_DEPOSIT_SIZE);
+        amountCollateral = bound(amountCollateral, 0, maxCollateral);
 
         if (amountCollateral == 0) {
             return;
@@ -67,6 +67,36 @@ contract StopOnRevertHandler is Test {
 
         vm.prank(msg.sender);
         dsce.redeemCollateral(address(collateral), amountCollateral);
+    }
+
+    function burnDsc(uint256 amountDsc) public {
+        // must burn more than zero
+        amountDsc = bound(amountDsc, 0, dsc.balanceOf(msg.sender));
+        if (amountDsc == 0) {
+            return;
+        }
+        vm.startPrank(msg.sender);
+        dsc.approve(address(dsce), amountDsc);
+        dsce.burnDsc(amountDsc);
+        vm.stopPrank();
+    }
+
+    function liquidate (
+        uint256 collateralSeed, 
+        address userToBeLiquidated, 
+        uint256 debtToCover
+    ) 
+        public 
+    {
+        uint256 minHealthFactor = dsce.getMinHealthFactor();
+        uint256 userHealthFactor = dsce.getHealthFactor(userToBeLiquidated);
+        if (userHealthFactor >= minHealthFactor) {
+            return;
+        }
+
+        debtToCover = bound(debtToCover, 1, uint256(MAX_DEPOSIT_SIZE));
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+        dsce.liquidate(address(collateral), userToBeLiquidated, debtToCover);
     }
 
 
