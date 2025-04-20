@@ -99,18 +99,37 @@ contract StopOnRevertHandler is Test {
         dsce.liquidate(address(collateral), userToBeLiquidated, debtToCover);
     }
 
+    /////////////////////////////
+    // DecentralizedStableCoin //
+    /////////////////////////////
 
-    ///////////////////////////
-    // Stablecoin Operations //
-    ///////////////////////////
+    function transferDsc (uint256 amountDsc, address to) public {
+        if (to == address(0)) {
+            to = address(1);
+        }
+        amountDsc = bound(amountDsc, 0, dsc.balanceOf(msg.sender));
+        vm.prank(msg.sender);
+        dsc.transfer(to, amountDsc);
+    }
 
-    /////////////////
-    // Liquidation //
-    /////////////////
+    ////////////////
+    // Aggregator //
+    ////////////////
 
-    //////////////////////
-    // Price Management //
-    //////////////////////
+    function updateCollateralPrice (
+        uint96 newPrice, 
+        uint256 collateralSeed
+    ) 
+        public 
+    {
+        int256 intNewPrice = int256(uint256(newPrice));
+        ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
+
+        MockV3Aggregator priceFeed = MockV3Aggregator(
+            dsce.getCollateralTokenPriceFeed(address(collateral))
+        );
+        priceFeed.updateAnswer(intNewPrice);
+    }
 
     // helper function
     function _getCollateralFromSeed(
@@ -127,5 +146,4 @@ contract StopOnRevertHandler is Test {
             return wbtc;
         }
     }
-
 }
