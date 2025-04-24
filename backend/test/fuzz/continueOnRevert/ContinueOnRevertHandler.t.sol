@@ -57,11 +57,14 @@ contract ContinueOnRevertHandler is Test {
         // get either weth or wbtc based on the seed
         ERC20Mock collateral = _getCollateralFromSeed(collateralSeed);
 
+        vm.startPrank(msg.sender);
         // mint the collateral tokens to the caller
-        collateral.mint(address(this), amountCollateral);
+        collateral.mint(address(msg.sender), amountCollateral);
+        collateral.approve(address(dsce), amountCollateral);
 
         // deposit the collateral into the dsc engine
         dsce.depositCollateral(address(collateral), amountCollateral);
+        vm.stopPrank();
     }
 
     function redeemCollateral (uint256 collateralSeed, uint256 amountCollateral) public {
