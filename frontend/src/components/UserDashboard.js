@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Box, Text, Stack, Stat, StatLabel, StatNumber } from '@chakra-ui/react';
+import { Box, Text, Stack, Stat } from '@chakra-ui/react';
 import { useWeb3 } from '../contexts/Web3Context';
-import { parseEther } from 'ethers';
+import { formatEther } from 'ethers';
 
 export function UserDashboard() {
     const { dscEngine, account } = useWeb3();
@@ -17,9 +17,9 @@ export function UserDashboard() {
                     const collateral = await dscEngine.getAccountCollateralValue(account);
                     const [minted, _] = await dscEngine.getAccountInformation(account);
                     
-                    setHealthFactor(parseEther.utils.formatEther(hf));
-                    setCollateralValue(parseEther.utils.formatEther(collateral));
-                    setDscMinted(parseEther.utils.formatEther(minted));
+                    setHealthFactor(formatEther(hf));
+                    setCollateralValue(formatEther(collateral));
+                    setDscMinted(formatEther(minted));
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
@@ -33,16 +33,22 @@ export function UserDashboard() {
         <Box p={4}>
             <Stack spacing={4}>
                 <Stat>
-                    <StatLabel>Health Factor</StatLabel>
-                    <StatNumber>{Number(healthFactor).toFixed(2)}</StatNumber>
+                    <Text fontWeight="semibold" fontSize="sm">Health Factor</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                        {Number(healthFactor).toFixed(2)}
+                    </Text>
                 </Stat>
                 <Stat>
-                    <StatLabel>Total Collateral (USD)</StatLabel>
-                    <StatNumber>${Number(collateralValue).toFixed(2)}</StatNumber>
+                    <Text fontWeight="semibold" fontSize="sm">Total Collateral (USD)</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                        ${Number(collateralValue).toFixed(2)}
+                    </Text>
                 </Stat>
                 <Stat>
-                    <StatLabel>DSC Minted</StatLabel>
-                    <StatNumber>{Number(dscMinted).toFixed(2)} DSC</StatNumber>
+                    <Text fontWeight="semibold" fontSize="sm">DSC Minted</Text>
+                    <Text fontSize="2xl" fontWeight="bold">
+                        {Number(dscMinted).toFixed(2)} DSC
+                    </Text>
                 </Stat>
             </Stack>
         </Box>
