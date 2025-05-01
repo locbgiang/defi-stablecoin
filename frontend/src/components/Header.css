@@ -24,8 +24,18 @@
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    overflow: hidden; /* Prevent content overflow */
+    white-space: nowrap; /* Prevent text wrapping */
+    text-overflow: ellipsis; /* Add ellipsis for truncated text */
+    width: 150px; /* Default width */
+    position: relative; /* For hover effect */
 }
 
 .connect-button:hover {
+    width: 300px;
+    font-size: 11px;
     background-color: #0056b3;
+    overflow: visible; /* Allow content to overflow */
+    text-overflow: unset;
+    white-space: nowrap;
 }

@@ -3,6 +3,7 @@ import './Header.css';
 
 export const Header = () => {
     const [account, setAccount] = useState('');
+    const [isHovered, setIsHovered] = useState(false); // State to track hover
 
     const connectWallet = async () => {
         if (window.ethereum) {
@@ -26,8 +27,16 @@ export const Header = () => {
             <button 
                 className="connect-button"
                 onClick={connectWallet}
+                onMouseEnter={() => setIsHovered(true)} // Set hover state to true
+                onMouseLeave={() => setIsHovered(false)} // Set hover state to false
             >
-                {account ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}` : 'Connect Wallet'}
+                {
+                account 
+                    ? isHovered // if account is connected check hover state
+                        ? account // show full account on hover
+                        : `${account.substring(0, 6)}...${account.substring(account.length - 4)}` 
+                    : 'Connect Wallet'
+                }
             </button>
         </div>
     )
