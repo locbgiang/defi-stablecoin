@@ -10,6 +10,10 @@ import { DSCEngine } from "../src/DSCEngine.sol";
  * @title DeployDSC
  * @author Loc Giang
  * @notice This contract deploys the DecentralizedStableCoin and DSCEngine contracts
+ * == Return ==
+    0: contract DecentralizedStableCoin 0x28809A72454095940fcF612fF5f4432c7F1e8Fef
+    1: contract DSCEngine 0x2b34541A0507308F43E8cA1D9cd1600db41bC8C8
+    2: contract HelperConfig 0xC7f2Cf4845C6db0e1a1e91ED41Bcd0FcC1b0E141
  */
 contract DeployDSC is Script {
     address[] public tokenAddresses;
@@ -28,7 +32,7 @@ contract DeployDSC is Script {
         // deployerKey is the private key of the deployer account
         // if on anvil it is the given key in HelperConfig contract
         // if on a testnet (sepolia) it is the private key of deployer account
-        vm.startBroadcast(deployerKey);
+        vm.startBroadcast();
         DecentralizedStableCoin dsc = new DecentralizedStableCoin();
         DSCEngine dsce = new DSCEngine(tokenAddresses, priceFeedAddresses, address(dsc));
 
