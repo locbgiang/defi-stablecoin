@@ -18,7 +18,7 @@
 
 .connect-button {
     padding: 10px 15px;
-    font-size: 16px;
+    font-size: 15px;
     background-color: #333333;
     color: white;
     border: 1px solid #e31b23;
@@ -33,12 +33,9 @@
 }
 
 .connect-button:hover {
-    width: 300px;
-    font-size: 11px;
+    width: 400px;
     background-color: #e31b23;
-    overflow: visible; /* Allow content to overflow */
-    text-overflow: unset;
-    white-space: nowrap;
+    font-size: 15px;
     color: #ffffff; /* Keep text white */
     border-color: #ffffff; 
 }
