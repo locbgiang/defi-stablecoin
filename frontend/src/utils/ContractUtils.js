@@ -16,10 +16,15 @@ export const getContracts = async () => {
     // this provider allows frontend to interact with the eth blockchain
     const provider = new BrowserProvider(window.ethereum);
 
+    // Request access to account - important step!
+    await window.ethereum.request({
+        method: "eth_requestAccounts",
+    });
+
     // retrieves the singer
     // which represent the user's wallet
     // used to send transactions or sign messages on behalf of the user
-    const signer = provider.getSigner();
+    const signer = await provider.getSigner();
 
     // creates an instance of the dscengine contract
     // contract address, abi, and signer
@@ -36,5 +41,5 @@ export const getContracts = async () => {
         provider
     );
 
-    return { dsce, dsc: readOnlyDsc };
+    return { dsce, dsc: readOnlyDsc, signer };
 };
