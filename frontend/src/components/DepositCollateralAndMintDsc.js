@@ -1,3 +1,4 @@
+/* global BigInt */
 import { useState } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
@@ -39,7 +40,14 @@ export const DepositCollateralAndMintDsc = () => {
 
             // 4. Call depositCollateralAndMintDsc with the right parameters
             setMessage("Depositing WETH and minting DSC...");
-            const dscAmountWei = parseEther(dscAmount ||  ethAmount);
+
+            const dscAmountWei = dscAmount
+                ? parseEther(dscAmount)
+                : parseEther(ethAmount) * BigInt(45) / BigInt(100);
+            
+            console.log("ETH amount in wei:", ethAmountWei.toString());
+            console.log("DSC amount in wei:", dscAmountWei.toString());
+            
             const mintTx = await dsce.depositCollateralAndMintDsc(
                 WETH_ADDRESS,
                 ethAmountWei,
