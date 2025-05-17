@@ -80,13 +80,36 @@ export const DepositCollateralAndMintDsc = () => {
             console.log("WETH amount (wei):", wethAmountWei.toString());
             console.log("DSC amount (wei):", dscAmountWei.toString());
 
+            // approval transaction
+            const approveTx = await weth.approve(await dsce.getAddress(), wethAmountWei);
+            await approveTx.wait();
+            setMessage("Approval successful. Now depositing collateral and minting DSC...");
+
             try {
+                /*
                 const mintTx = await dsce.depositCollateralAndMintDsc(
                     WETH_ADDRESS,
                     wethAmountWei,
                     dscAmountWei
                 );
                 await mintTx.wait();
+                */
+                
+                // instead of depositCollateralAndMintDsc
+                // deposit collateral and mint DSC separately
+                setMessage("Depositing collateral...");
+                const depositTx = await dsce.depositCollateral(
+                    WETH_ADDRESS,
+                    wethAmountWei
+                );
+                await depositTx.wait();
+
+                setMessage("Minting DSC...");
+                const mintTx = await dsce.mintDsc(
+                    dscAmountWei
+                );
+                await mintTx.wait();
+                
                 setMessage("Success! Deposited WETH and minted DSC.");
 
                 // clear inputs after successful transaction
