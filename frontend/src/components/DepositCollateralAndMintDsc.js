@@ -10,7 +10,6 @@ const WETH_ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",
 ]
 
-
 export const DepositCollateralAndMintDsc = () => {
     const [wethAmount, setWethAmount] = useState("");
     const [dscAmount, setDscAmount] = useState("");

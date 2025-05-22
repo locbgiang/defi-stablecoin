@@ -3,7 +3,7 @@ import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
 
 // WETH contract address on sepolia
-const WETH_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
+const WETH_ADDRESS = "0xdd13E55209Fd76AfE204dBda4007C227904f0a81";
 
 // Minimal WETH ABI for the functions we need
 const WETH_ABI = [
