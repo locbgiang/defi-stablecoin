@@ -2,6 +2,7 @@ import { BrowserProvider, Contract } from "ethers";
 import { contractAddresses } from "../contracts/ContractAddresses";
 import DSCEngineABI from "../contracts/DSCEngineABI.json";
 import DecentralizedStableCoinABI from "../contracts/DecentralizedStableCoinABI.json";
+import WethABI from "../contracts/WethABI.json";
 
 /**
  * @author: Loc Giang
@@ -41,5 +42,12 @@ export const getContracts = async () => {
         provider
     );
 
-    return { dsce, dsc: readOnlyDsc, signer };
+    // Add WETH contract instance
+    const weth = new Contract(
+        contractAddresses.WETH,
+        WethABI,
+        signer
+    )
+
+    return { dsce, dsc: readOnlyDsc, weth, signer };
 };

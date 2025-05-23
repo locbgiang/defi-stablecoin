@@ -2,24 +2,18 @@ import { useState } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
 
-const WETH_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
-
-const WETH_ABI = [
-    "function balanceOf(address account) external view returns (uint256)",
-    "function approve(address spender, uint256 amount) external returns (bool)",
-]
 export const CheckContractStatus = () => {
     const [message, setMessage] = useState("");
 
     const checkContractStatus = async () => {
         try {
             setMessage("Checking contract status...");
-            const { dsce, dsc, signer } = await getContracts();
+            const { dsce, dsc, signer, weth } = await getContracts();
             const userAddress = await signer.getAddress();
 
             // Get collateral balance
             const collateralBalance = await dsce.getCollateralBalanceOfUser(
-                WETH_ADDRESS,
+                weth.target,
                 userAddress
             );
 
@@ -29,13 +23,7 @@ export const CheckContractStatus = () => {
             // Get health factor 
             const healthFactor = await dsce.getHealthFactor(userAddress);
 
-            // Check WETH balance
-            const wethContract = new Contract(
-                WETH_ADDRESS,
-                WETH_ABI,
-                signer
-            )
-            const wethBalance = await wethContract.balanceOf(userAddress);
+            const wethBalance = await weth.balanceOf(userAddress);
             
             // Format and display the results
             setMessage(`

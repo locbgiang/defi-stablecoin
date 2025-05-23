@@ -2,17 +2,6 @@ import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
 
-// WETH contract address on sepolia
-const WETH_ADDRESS = "0xdd13E55209Fd76AfE204dBda4007C227904f0a81";
-
-// Minimal WETH ABI for the functions we need
-const WETH_ABI = [
-    "function deposit() external payable",
-    "function approve(address spender, uint256 amount) external returns (bool)",
-    "function balanceOf(address account) external view returns (uint256)",
-    "function withdraw(uint256 amount) external"
-];
-
 export const WethConverter = () => {
     const [ethAmount, setEthAmount] = useState("");
     const [wethAmount, setWethAmount] = useState("");
@@ -22,8 +11,7 @@ export const WethConverter = () => {
     // Function to update WETH balance 
     const updateWethBalance = async () => {
         try {
-            const { signer } = await getContracts();
-            const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const { signer, weth } = await getContracts();
             const balance = await weth.balanceOf(await signer.getAddress());
             setWethBalance(balance.toString());
         } catch (error) {
@@ -39,8 +27,8 @@ export const WethConverter = () => {
     const convertEthToWeth = async () => {
         try {
             setMessage("Processing ETH to WETH conversion...");
-            const { signer } = await getContracts();
-            const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const { signer, weth } = await getContracts();
+            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
 
             const ethAmountWei = parseEther(ethAmount);
             const wrapTx = await weth.deposit({
@@ -60,8 +48,8 @@ export const WethConverter = () => {
     const unwrapWeth = async () => {
         try {
             setMessage("Unwrapping WETH to ETH...");
-            const { signer } = await getContracts();
-            const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const { signer, weth } = await getContracts();
+            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
 
             if (!wethAmount) {
                 setMessage("Please enter a WETH amount to unwrap.");
