@@ -3,13 +3,6 @@ import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
 
-const WETH_ADDRESS = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
-
-const WETH_ABI = [
-    "function balanceOf(address account) external view returns (uint256)",
-    "function approve(address spender, uint256 amount) external returns (bool)",
-]
-
 export const DepositCollateralAndMintDsc = () => {
     const [wethAmount, setWethAmount] = useState("");
     const [dscAmount, setDscAmount] = useState("");
@@ -20,8 +13,8 @@ export const DepositCollateralAndMintDsc = () => {
     // fetch WETH balance on component mount
     const updateWethBalance = async () => {
         try {
-            const { signer } = await getContracts();
-            const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const { signer, weth } = await getContracts();
+            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
             const balance = await weth.balanceOf(await signer.getAddress());
             setWethBalance(balance.toString());
         } catch (error) {
@@ -59,8 +52,8 @@ export const DepositCollateralAndMintDsc = () => {
                 return;
             }
 
-            const { dsce, signer } = await getContracts();
-            const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const { dsce, signer, weth } = await getContracts();
+            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
 
             // convert amounts to wei
             const wethAmountWei = parseEther(wethAmount);
@@ -98,7 +91,7 @@ export const DepositCollateralAndMintDsc = () => {
                 // deposit collateral and mint DSC separately
                 setMessage("Depositing collateral...");
                 const depositTx = await dsce.depositCollateral(
-                    WETH_ADDRESS,
+                    weth.target,
                     wethAmountWei
                 );
                 await depositTx.wait();

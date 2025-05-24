@@ -3,6 +3,7 @@ import { WethConverter } from "./components/WethConverter";
 import { DepositCollateralAndMintDsc } from "./components/DepositCollateralAndMintDsc";
 import { CheckContractStatus } from "./components/CheckContractStatus";
 import { DepositCollateral } from "./components/DepositCollateral";
+import { RedeemCollateral } from "./components/RedeemCollateral";
 
 function App() {
     return (
@@ -10,7 +11,7 @@ function App() {
             <Header />
             <WethConverter />
             <CheckContractStatus />
-            <DepositCollateral />
+            <DepositCollateralAndMintDsc />
         </div>
     );
 }

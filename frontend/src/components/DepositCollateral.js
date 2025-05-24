@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getContracts } from "../utils/ContractUtils";
-import { parseEther, Contract, id } from "ethers";
+import { parseEther, Contract} from "ethers";
 
 export const DepositCollateral = () => { 
     const [wethAmount, setWethAmount] = useState("");
@@ -8,7 +8,7 @@ export const DepositCollateral = () => {
 
     const depositCollateral = async () => {        
         try {
-            const { dsce, signer, weth } = await getContracts();
+            const { dsce, weth } = await getContracts();
 
             const wethAmountWei = parseEther(wethAmount);
 
