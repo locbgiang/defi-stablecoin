@@ -11,11 +11,29 @@ export const CheckContractStatus = () => {
             const { dsce, dsc, signer, weth } = await getContracts();
             const userAddress = await signer.getAddress();
 
+            // add debugging info
+            console.log("=== DEBUGGING INFO ===");
+            console.log("User Address:", userAddress);
+            console.log("DSCEngine Address:", await dsce.getAddress());
+            console.log("WETH Address:", weth.target);
+            console.log("DSC Address:", await dsc.getAddress());
+
             // Get collateral balance
             const collateralBalance = await dsce.getCollateralBalanceOfUser(
-                weth.target,
-                userAddress
+                userAddress,
+                weth.target
             );
+
+            const contractWethBalance = await weth.balanceOf(
+                dsce.getAddress()
+            )
+
+            // Add this to your CheckContractStatus
+            const oldWethCollateral = await dsce.getCollateralBalanceOfUser(
+                userAddress,
+                "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9" // Old WETH
+            );
+
 
             // Get DSC balance
             const dscBalance = await dsc.balanceOf(userAddress);
@@ -29,6 +47,8 @@ export const CheckContractStatus = () => {
             setMessage(`
                 Status:
                 - WETH Collateral: ${collateralBalance.toString()} wei
+                - Contract Collateral Balance: ${contractWethBalance.toString()} wei
+                - Old WETH Collateral: ${oldWethCollateral.toString()} wei
                 - DSC Balance: ${dscBalance.toString()} wei
                 - Health Factor: ${healthFactor.toString()} 
                 - WETH Balance: ${wethBalance.toString()} wei

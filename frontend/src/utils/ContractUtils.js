@@ -36,10 +36,10 @@ export const getContracts = async () => {
     );
     
     // creates an instance of the dsc contract
-    const readOnlyDsc = new Contract(
+    const dsc = new Contract(
         contractAddresses.DecentralizedStableCoin,
         DecentralizedStableCoinABI,
-        provider
+        signer
     );
 
     // Add WETH contract instance
@@ -49,5 +49,5 @@ export const getContracts = async () => {
         signer
     )
 
-    return { dsce, dsc: readOnlyDsc, weth, signer };
+    return { dsce, dsc, weth, signer };
 };
