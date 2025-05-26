@@ -1,34 +1,18 @@
 import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
-import { parseEther, Contract } from "ethers";
+import { parseEther, Contract, formatEther } from "ethers";
+import './WethConverter.css';
 
-export const WethConverter = () => {
+export const WethConverter = () => { 
     const [ethAmount, setEthAmount] = useState("");
     const [wethAmount, setWethAmount] = useState("");
     const [message, setMessage] = useState("");
     const [wethBalance, setWethBalance] = useState("");
 
-    // Function to update WETH balance 
-    const updateWethBalance = async () => {
-        try {
-            const { signer, weth } = await getContracts();
-            const balance = await weth.balanceOf(await signer.getAddress());
-            setWethBalance(balance.toString());
-        } catch (error) {
-            console.error("Error: fetching WETH balance:", error);
-        }
-    };
-
-    // Update balance on component mount
-    useEffect(() => {
-        updateWethBalance();
-    }, []);
-
     const convertEthToWeth = async () => {
         try {
             setMessage("Processing ETH to WETH conversion...");
             const { signer, weth } = await getContracts();
-            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
 
             const ethAmountWei = parseEther(ethAmount);
             const wrapTx = await weth.deposit({
@@ -38,7 +22,6 @@ export const WethConverter = () => {
             await wrapTx.wait();
 
             setMessage("Successfully converted ETH to WETH.");
-            updateWethBalance();
         } catch (error) {
             console.error(error);
             setMessage("Error converting ETH: " + (error.message));
@@ -49,7 +32,6 @@ export const WethConverter = () => {
         try {
             setMessage("Unwrapping WETH to ETH...");
             const { signer, weth } = await getContracts();
-            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
 
             if (!wethAmount) {
                 setMessage("Please enter a WETH amount to unwrap.");
@@ -68,7 +50,6 @@ export const WethConverter = () => {
             await unWrapTx.wait();
 
             setMessage("Successfully unwrapped WETH to ETH");
-            updateWethBalance();
         } catch (error) {
             console.error(error);
             setMessage("Error unwrapping WETH: " + (error.message));
