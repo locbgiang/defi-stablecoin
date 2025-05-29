@@ -7,17 +7,16 @@ export const WethConverter = () => {
     const [ethAmount, setEthAmount] = useState("");
     const [wethAmount, setWethAmount] = useState("");
     const [message, setMessage] = useState("");
-    const [wethBalance, setWethBalance] = useState("");
 
     const convertEthToWeth = async () => {
         try {
             setMessage("Processing ETH to WETH conversion...");
-            const { signer, weth } = await getContracts();
-
+            const { weth } = await getContracts();
             const ethAmountWei = parseEther(ethAmount);
             const wrapTx = await weth.deposit({
                 value: ethAmountWei,
             });
+
             setMessage("Wrapping ETH to WETH...");
             await wrapTx.wait();
 
@@ -30,23 +29,12 @@ export const WethConverter = () => {
 
     const unwrapWeth = async () => {
         try {
-            setMessage("Unwrapping WETH to ETH...");
-            const { signer, weth } = await getContracts();
-
-            if (!wethAmount) {
-                setMessage("Please enter a WETH amount to unwrap.");
-                return;
-            }
-
+            setMessage("Processing WETH to ETH conversion...");
+            const { weth } = await getContracts();
             const wethAmountWei = parseEther(wethAmount);
-
-            const balance = await weth.balanceOf(await signer.getAddress());
-            if (wethAmountWei > balance) {
-                setMessage(`Cannot unwrap more than your (${balance} wei`);
-                return;
-            }
-
             const unWrapTx = await weth.withdraw(wethAmountWei);
+
+            setMessage("Unwrapping WETH to ETH...");
             await unWrapTx.wait();
 
             setMessage("Successfully unwrapped WETH to ETH");
@@ -57,28 +45,37 @@ export const WethConverter = () => {
     };
 
     return (
-        <div>
-            <div>
+        <div className='weth-converter-container'>
+            <div className='converter-section'>
                 <h2>Converting ETH to WETH</h2>
-                <p>Current WETH Balance: {wethBalance} wei</p>
-                <input 
-                    type="number"
-                    placeholder="Enter ETH amount"
-                    value={ethAmount}
-                    onChange={(e) => setEthAmount(e.target.value)}
-                />
-                <button onClick={convertEthToWeth}>Convert</button>
+                <div className='input-group'>        
+                    <input 
+                        className='converter-input'
+                        type="number"
+                        placeholder="Enter ETH amount"
+                        value={ethAmount}
+                        onChange={(e) => setEthAmount(e.target.value)}
+                    />
+                    <button className='converter-button' onClick={convertEthToWeth}>
+                        Convert ETH to WETH
+                    </button>
+                </div>
                 {message && <p>{message}</p>}
             </div>
-            <div>
+            <div className='converter-section'>
                 <h2>Recovery</h2>
-                <input 
-                    type="number"
-                    placeholder="Enter WETH amount"
-                    value={wethAmount}
-                    onChange={(e) => setWethAmount(e.target.value)}
-                />
-                <button onClick={unwrapWeth}>Recover ETH (Unwrap WETH)</button>
+                <div className='input-group'>
+                    <input 
+                        className='converter-input'
+                        type="number"
+                        placeholder="Enter WETH amount"
+                        value={wethAmount}
+                        onChange={(e) => setWethAmount(e.target.value)}
+                    />
+                    <button className='converter-button' onClick={unwrapWeth}>
+                        Recover ETH (Unwrap WETH)
+                    </button>
+                </div>
             </div>
         </div>
     )
