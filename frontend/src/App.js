@@ -13,9 +13,11 @@ function App() {
         <div className='app-container'>
             <Header />
             <DisplayUserData />
-            <WethConverter />
-            <DepositCollateralAndMintDsc />
-            <RedeemCollateralForDsc />
+            <div className='body'>
+                <WethConverter />
+                <DepositCollateralAndMintDsc />
+                <RedeemCollateralForDsc />
+            </div>
         </div>
     );
 }

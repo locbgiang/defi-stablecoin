@@ -3,3 +3,15 @@
     min-height: 100vh;
     width: 100%;
 }
+
+.body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.body > * {
+    flex: 0 0 calc(50% - 12px); /* Fixed width: 50% minus half the gap */
+}
