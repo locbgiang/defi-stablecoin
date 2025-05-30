@@ -157,58 +157,66 @@ export const DepositCollateralAndMintDsc = () => {
             </div>
             {isExpanded && (
                 <div className='deposit-mint-content'>
-                    <div className='input-section'>
-                        <h3>WETH Collateral Amount</h3>
-                        <input 
-                            className='deposit-input'
-                            type="number"
-                            placeholder="Enter WETH amount"
-                            value={wethAmount}
-                            onChange={(e) => setWethAmount(e.target.value)}
-                            onBlur={calculateSafeDscAmount}
-                            disabled={isLoading}
-                        />
-                    </div>
-
-                    <div className='input-section'>
-                        <h3>DSC Amount to Mint</h3>
-                        <div className='input-group'>
-                            <div className='input-wrapper'>
+                    <div className='deposit-mint-sections'>
+                        <div className='input-section'>
+                            <h3>WETH Collateral</h3>
+                            <div className='input-group'>
                                 <input 
                                     className='deposit-input'
                                     type="number"
-                                    placeholder="Enter DSC amount (45% of collateral recommended"
+                                    placeholder="Enter WETH amount"
+                                    value={wethAmount}
+                                    onChange={(e) => setWethAmount(e.target.value)}
+                                    onBlur={calculateSafeDscAmount}
+                                    disabled={isLoading}
+                                />
+                                <div className='recommendation-text'>
+                                    Balance: {formatBalance(wethBalance)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className='input-section'>
+                            <h3>DSC to Mint</h3>
+                            <div className='input-group'>
+                                <input 
+                                    className='deposit-input'
+                                    type="number"
+                                    placeholder="Enter DSC amount"
                                     value={dscAmount}
                                     onChange={(e) => setDscAmount(e.target.value)}
                                     disabled={isLoading}
                                 />
+                                <button 
+                                    className='calculate-button'
+                                    onClick={calculateSafeDscAmount}
+                                    disabled={isLoading || !wethAmount}
+                                >
+                                    Calculate Safe Amount (45%)
+                                </button>
+                                <div className='recommendation-text'>
+                                    Recommended: 45% of collateral value
+                                </div>
                             </div>
-                            <button 
-                                className='calculate-button'
-                                onClick={calculateSafeDscAmount}
-                                disabled={isLoading || !wethAmount}
-                            >
-                                Safe Amount
-                            </button>
-                        </div>
-                        <div className='recommendation-text'>
-                            Recommended: 45% of collateral value for safe minting
                         </div>
                     </div>
 
-                    <button
-                        className='main-action-button'
-                        onClick={handleDepositAndMint}
-                        disabled={isLoading || !wethAmount || !dscAmount}
-                    >
-                        {isLoading && <span className="loading-spinner"></span>}
-                        {isLoading ? "Processing..." : "Deposit Collateral and Mint DSC"}
-                    </button>
-                    {message && (
-                        <div className={getMessageClass()}>
-                            {message}
-                        </div>
-                    )}
+                    <div className='action-section'>
+                        <button
+                            className='main-action-button'
+                            onClick={handleDepositAndMint}
+                            disabled={isLoading || !wethAmount || !dscAmount}
+                        >
+                            {isLoading && <span className="loading-spinner"></span>}
+                            {isLoading ? "Processing..." : "Deposit Collateral and Mint DSC"}
+                        </button>
+                        
+                        {message && (
+                            <div className={getMessageClass()}>
+                                {message}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
