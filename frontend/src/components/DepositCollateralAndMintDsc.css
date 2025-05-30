@@ -1,4 +1,4 @@
-.weth-converter-container {
+.deposit-mint-container {
     padding: 0;
     background-color: #1a1a1a;
     border: 1px solid #333;
@@ -10,18 +10,18 @@
     overflow: hidden;
 }
 
-.weth-converter-header {
+.deposit-mint-header {
     padding: 16px 24px;
     cursor: pointer;
     border-bottom: 1px solid #333;
     transition: background-color 0.2s ease;
 }
 
-.weth-converter-header:hover {
+.deposit-mint-header:hover {
     background-color: #242424;
 }
 
-.weth-converter-title {
+.deposit-mint-title {
     margin: 0;
     color: #ffffff;
     font-size: 1.1rem;
@@ -36,14 +36,14 @@
 .dropdown-arrow {
     color: #e31b23;
     font-size: 0.8rem;
-    transition: transfrom 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
 .dropdown-arrow.expanded {
     transform: rotate(180deg);
 }
 
-.weth-converter-content {
+.deposit-mint-content {
     padding: 24px;
     animation: slideDown 0.3s ease-out;
 }
@@ -59,24 +59,32 @@
     }
 }
 
-.converter-sections {
-    display: flex;
-    gap: 24px;
+.balance-display {
+    background-color: #242424;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: bold;
+    color: #ffffff;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.converter-section {
+.input-section {
     background-color: #242424;
     border: 1px solid #333;
     border-radius: 4px;
     padding: 20px;
-    flex: 1;
-    min-width: 0; /* Prevents flex items from overflowing */
+    margin-bottom: 20px;
 }
 
-.converter-section h3 {
-    margin: 0 0 20px 0;
+.input-section h3 {
+    margin: 0 0 16px 0;
     color: #ffffff;
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -86,12 +94,15 @@
 
 .input-group {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 12px;
+    align-items: flex-end;
 }
 
-.converter-input {
+.input-wrapper {
+    flex: 1;
+}
+
+.deposit-input {
     padding: 12px 16px;
     background-color: #333;
     color: #e0e0e0;
@@ -104,18 +115,18 @@
     box-sizing: border-box;
 }
 
-.converter-input:focus {
+.deposit-input:focus {
     outline: none;
     border-color: #e31b23;
     background-color: #404040;
 }
 
-.converter-input::placeholder {
+.deposit-input::placeholder {
     color: #888;
 }
 
-.converter-button {
-    padding: 12px 24px;
+.calculate-button {
+    padding: 12px 16px;
     background-color: #333;
     color: #e0e0e0;
     border: 1px solid #555;
@@ -125,23 +136,66 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     transition: all 0.2s ease;
-    width: 100%;
+    white-space: nowrap;
 }
 
-.converter-button:hover {
+.calculate-button:hover:not(:disabled) {
     background-color: #e31b23;
-    border-color: ff6b35;
+    border-color: #e31b23;
     color: #000;
     transform: translateY(-1px);
 }
 
-.converter-button:active {
+.calculate-button:disabled {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.recommendation-text {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+}
+
+.main-action-button {
+    padding: 16px 24px;
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.main-action-button:hover:not(:disabled) {
+    background-color: #e31b23;
+    border-color: #e31b23;
+    color: #000;
+    transform: translateY(-1px);
+}
+
+.main-action-button:active {
     transform: translateY(0);
 }
 
-.converter-button:disabled {
+.main-action-button:disabled {
     background-color: #2a2a2a;
     border-color: #444;
     color: #666;
@@ -189,31 +243,6 @@
     }
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .weth-converter-content {
-        padding: 16px;
-    }
-
-    .converter-sections {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .converter-section {
-        padding: 16px;
-    }
-
-    .converter-section h3 {
-        font-size: 0.9rem;
-        margin-bottom: 16px;
-    }
-
-    .input-group {
-        gap: 12px;
-    }
-}
-
 /* Loading animation for processing states */
 .status-message.processing::after {
     content: '';
@@ -227,7 +256,41 @@
     animation: spin 1s linear infinite;
 }
 
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .deposit-mint-content {
+        padding: 16px;
+    }
+
+    .input-section {
+        padding: 16px;
+    }
+
+    .input-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .calculate-button {
+        width: 100%;
+    }
+
+    .deposit-mint-title {
+        font-size: 1rem;
+    }
 }

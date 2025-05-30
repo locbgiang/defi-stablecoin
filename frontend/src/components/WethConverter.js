@@ -7,6 +7,7 @@ export const WethConverter = () => {
     const [ethAmount, setEthAmount] = useState("");
     const [wethAmount, setWethAmount] = useState("");
     const [message, setMessage] = useState("");
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const convertEthToWeth = async () => {
         try {
@@ -44,39 +45,66 @@ export const WethConverter = () => {
         }
     };
 
+    const getMessageClass = () => {
+        if (message.includes('Error')) return 'status-message error';
+        if (message.includes('Processing') || message.includes('Unwrapping')) {
+            return 'status-message processing';
+        }
+        if (message.includes('sucessfully')) return 'status-message sucess';
+        return 'status-message';
+    }
+
+    const toggleDropDown = () => {
+        setIsExpanded(!isExpanded);
+    };
+
     return (
         <div className='weth-converter-container'>
-            <div className='converter-section'>
-                <h2>Converting ETH to WETH</h2>
-                <div className='input-group'>        
-                    <input 
-                        className='converter-input'
-                        type="number"
-                        placeholder="Enter ETH amount"
-                        value={ethAmount}
-                        onChange={(e) => setEthAmount(e.target.value)}
-                    />
-                    <button className='converter-button' onClick={convertEthToWeth}>
-                        Convert ETH to WETH
-                    </button>
-                </div>
-                {message && <p>{message}</p>}
+            <div className='weth-converter-header' onClick={toggleDropDown}>
+                <h2 className='weth-converter-title'>
+                    WETH Converter
+                    <span className={`dropdown-arrow ${isExpanded ? 'expanded' : ''}`}>▼</span>
+                </h2>
             </div>
-            <div className='converter-section'>
-                <h2>Recovery</h2>
-                <div className='input-group'>
-                    <input 
-                        className='converter-input'
-                        type="number"
-                        placeholder="Enter WETH amount"
-                        value={wethAmount}
-                        onChange={(e) => setWethAmount(e.target.value)}
-                    />
-                    <button className='converter-button' onClick={unwrapWeth}>
-                        Recover ETH (Unwrap WETH)
-                    </button>
+
+            {isExpanded && (
+                <div className='weth-converter-content'>
+                    <div className='converter-sections'>
+                        <div className='converter-section'>
+                            <h3>Converting ETH to WETH</h3>
+                            <div className='input-group'>        
+                                <input 
+                                    className='converter-input'
+                                    type="number"
+                                    placeholder="Enter ETH amount"
+                                    value={ethAmount}
+                                    onChange={(e) => setEthAmount(e.target.value)}
+                                />
+                                <button className='converter-button' onClick={convertEthToWeth}>
+                                    Convert ETH to WETH
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div className='converter-section'>
+                            <h3>Recovery</h3>
+                            <div className='input-group'>
+                                <input 
+                                    className='converter-input'
+                                    type="number"
+                                    placeholder="Enter WETH amount"
+                                    value={wethAmount}
+                                    onChange={(e) => setWethAmount(e.target.value)}
+                                />
+                                <button className='converter-button' onClick={unwrapWeth}>
+                                    Recover ETH (Unwrap WETH)
+                                </button>
+                            </div>
+                        </div> 
+                    </div>
+                    {message && <div className={getMessageClass()}>{message}</div>}
                 </div>
-            </div>
+            )}
         </div>
     )
 }
