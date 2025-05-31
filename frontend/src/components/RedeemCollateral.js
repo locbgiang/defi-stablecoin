@@ -5,23 +5,44 @@ import { parseEther, Contract} from "ethers";
 export const RedeemCollateral = () => {
     const [wethAmount, setWethAmount] = useState("");
     const [message, setMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const redeemCollateral = async () => {
+    const redeemAllCollateral = async () => {
         try {
-            const { dsce, weth } = await getContracts();
-            const wethAmountWei = parseEther(wethAmount);
+            setIsLoading(true);
+            setMessage('Processing withdrawal of all collateral...');
 
-            // withdrawing collateral
-            setMessage("Withdrawing collateral...");
+            const { dsce, weth } = await getContracts();
+
+            // Check if user has any collateral
+            if (collateralBalance === "0") {
+                setMessage('No collateral to withdraw.');
+                setIsLoading(false);
+                return;
+            }
+
+            // Withdrawing all collateral
+            setMessage('Withdrawing all collateral...');
             const withdrawTx = await dsce.redeemCollateral(
                 weth.target,
-                wethAmountWei
+                collateralBalance
             )
             await withdrawTx.wait();
 
+            setMessage('Success! All collateral withdrawn.');
+            setWethAmount('');
+
+            // Update balance
+            updateCollateralBalance();
         } catch (error) {
-            console.error("Error withdrawing collateral:", error);
-            setMessage("Error in contract call: " + (error.message || "withdraw failed"));
+            console.error('Error withdrawing all collateral:', error);
+            if (error.message.includes('BreaksHealthFactor')) {
+                setMessage('Error: Cannot withdraw all collateral, would break health factor. You may need to burn some DSC first.');
+            } else {
+                setMessage('Error in contract call: ' + (error.message || 'withdraw all failed'));
+            } 
+        } finally {
+            setIsLoading(false);
         }
     }
 
