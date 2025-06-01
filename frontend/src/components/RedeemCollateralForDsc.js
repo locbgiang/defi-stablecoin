@@ -1,54 +1,106 @@
 import React, { useState } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, id } from "ethers";
+import { useUser } from '../Context';
 
 export const RedeemCollateralForDsc = () => {
+    const { userData, connectWallet, disconnectWallet, loading, error } = useUser();
     const [collateralAmount, setCollateralAmount] = useState("");
+    const [dscToBurnAmount, setDscToBurnAmount] = useState("");
     const [message, setMessage] = useState("");
 
-
+    /*
     const redeemCollateralForDsc = async () => {
+        const { dsce, weth } = await getContracts();
+        const wethAmountWei = parseEther(collateralAmount);
+        const dscAmountWei = parseEther(dscToBurnAmount);
+
+        setMessage('Withdrawing collateral...');
+        const withdrawTx = await dsce.redeemCollateral(
+            weth.target,
+            wethAmountWei
+        );
+        await withdrawTx.wait();
+
+        setMessage('Success! collateral withdrawn!');
+    }*/
+
+    const redeemAllCollateralForDsc = async () => {
         try {
-            const { dsce, dsc, weth, signer } = await getContracts();
-            const userAddress = await signer.getAddress();
+            // const { dsce, dsc, weth, signer } = await getContracts();
+            // const userAddress = await signer.getAddress();
+            
+            // Get user's DSC balance and collateral balance
+            /*
+            const [
+                dscBalance,
+                colBalance,
+            ] = await Promise.all([
+                dsc.balanceOf(userAddress),
+                dsce.getCollateralBalanceOfUser(
+                    userAddress,
+                    weth.target
+                )
+            ])
+            */
+            console.log(userData)
 
-            const collateralAmountWei = parseEther(collateralAmount);
-            const exactDscBalance = await dsc.balanceOf(userAddress);
-
-            // approving the DSCEngine contract to burn DSC
-            setMessage("Approving DSCEngine to burn DSC...");
-            const approveTx = await dsc.approve(
-                await dsce.getAddress(),
-                exactDscBalance
+            
+            // Withdrawing all collateral
+            setMessage('Withdrawing all collateral...');
+            const withdrawTx = await dsce.redeemCollateralForDsc(
+                weth.target,
+                colBalance,
+                dscBalance
             )
-            await approveTx.wait();
-            setMessage("DSCEngine approved to burn DSC");
+            await withdrawTx.wait();
+            
 
-            // redeeming collateral for DSC
-            setMessage("Redeeming collateral for DSC...");
-            const redeemTx = await dsce.redeemCollateralForDsc(
-                weth.target, // address of the collateral token
-                collateralAmountWei, // amount of collateral to redeem
-                exactDscBalance // amount of DSC to burn
-            );
-            await redeemTx.wait();
-
+            setMessage('Success! All collateral withdrawn.');
         } catch (error) {
-            console.error("Error redeeming collateral for DSC;", error);
-            setMessage("Error in contract call: " + (error.message || "Redeeming failed"));
+            console.error('Error withdrawing all collateral:', error);
+            if (error.message.includes('BreaksHealthFactor')) {
+                setMessage('Error: Cannot withdraw all collateral, would break health factor. You may need to burn some DSC first.')
+            } else {
+                setMessage('Error in contract call: ' + (error.message || 'withdraw all failed'));
+            }
         }
     }
 
     return (
         <div>
             <h2>Redeem Collateral For DSC</h2>
-            <input 
-                type='text'
-                placeholder='Enter collateral amount'
-                value={collateralAmount}
-                onChange={(e) => setCollateralAmount(e.target.value)}
-            />
-            <button onClick={redeemCollateralForDsc}>Redeem</button>
+            {/*<div>
+                <h3> Redeem Custom Amount </h3>
+                <input 
+                    type='number'
+                    placeholder='Enter WETH amount'
+                    value={collateralAmount}
+                    onChange={(e) => setCollateralAmount(e.target.value)}
+                />
+                <input
+                    type='number'
+                    placeholder='Enter DSC amount to burn'
+                    value={dscToBurnAmount}
+                    onChange={(e) => setDscToBurnAmount(e.target.value)}
+                />
+                <button 
+                    onClick={redeemCollateralForDsc}
+                >
+                    Redeem WETH for DSC
+                </button>
+            </div>*/}
+
+            <div>
+                <h3> Redeem All Collateral </h3>
+                <button 
+                    onClick={redeemAllCollateralForDsc}
+                >
+                    Redeem All
+                </button>
+                <p>⚠️ This will withdraw all your collateral. Make sure you have no DSC minted or this will fail. </p>
+            </div>
+
             {message && <p>{message}</p>}
         </div>
     )

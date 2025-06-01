@@ -4,18 +4,19 @@ import { formatEther, parseEther, Contract } from "ethers";
 import './DisplayUserData.css';
 
 export const DisplayUserData = () => {
-    const [userData, setUserData] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    // const [userData, setUserData] = useState(null); 
+    const { userData, connectWallet, disconnectWallet, loading, error } = useUser();
+    // const [loading, setLoading] = useState(false);
+    // const [error, setError] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
 
     const loadUserData = async () => {
         try {
-            setLoading(true);
-            setError("");
+            // setLoading(true);
+            // setError("");
 
-            const { dsce, dsc, weth, signer } = await getContracts();
-            const userAddress = await signer.getAddress();
+            // const { dsce, dsc, weth, signer } = await getContracts();
+            // const userAddress = await signer.getAddress();
 
             // Get user's balances and positions
             const [
@@ -25,8 +26,8 @@ export const DisplayUserData = () => {
                 healthFactor,
 
             ] = await Promise.all([
-                weth.balanceOf(userAddress),
-                dsc.balanceOf(userAddress),
+                userData.weth.balanceOf(userAddress),
+                userData.dsc.balanceOf(userAddress),
                 dsce.getCollateralBalanceOfUser(userAddress, weth.target),
                 dsce.getHealthFactor(userAddress)
             ]);
