@@ -3,7 +3,7 @@ import { useUser } from '../Context';
 import './Header.css';
 
 export const Header = () => {
-    const { userData, connectWallet, disconnectWallet, loading, error } = useUser();
+    const { userData, connectWallet, disconnectWallet, contracts} = useUser();
     const [isHovered, setIsHovered] = useState(false); // State to track hover
 
     const handleWalletAction = () => {

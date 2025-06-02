@@ -1,8 +1,11 @@
 import {createContext, useState, useContext, useEffect, useCallback} from 'react';
 import {getContracts} from './utils/ContractUtils';
-
 export const UserContext = createContext();
 
+/**
+ * Custom hook to access user context
+ * @returns {Object} - The user context containing user data
+ */
 export const useUser = () => {
     const context = useContext(UserContext);
     if (!context) {
@@ -11,43 +14,45 @@ export const useUser = () => {
     return context;
 };
 
+// Default user data structure
 const initialUserData = {
     address: null,
     ethBalance: '0',
     wethBalance: '0',
     dscBalance: '0',
+    wethCollateralBalance: '0',
     totalCollateralValueInUsd: '0',
     healthFactor: '0'
 };
 
+/**
+ * UserProvider component to manage user data and wallet connection
+ */
 export const UserProvider = ({children}) => {
     const [userData, setUserData] = useState(initialUserData);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [contracts, setContracts] = useState(null);
 
-    // Single function to fetch user data
-    const fetchUserData = useCallback(async (userAddress, contractInstances) => {
-        if (!userAddress) return;
-        
+    // function to fetch user data and contract instances
+    const fetchUserData = async () => {
         try {
-            setLoading(true);
-            setError(null);
-
             // Get contracts if not provided
-            const contracts = contractInstances || await getContracts();
-            const { dsce, dsc, weth, signer } = contracts;
+            const {dsce, dsc, weth, signer} = await getContracts();
+            const userAddress = await signer.getAddress();
 
             const [
                 ethBalance,
                 wethBalance,
                 dscBalance,
+                wethCollateralBalance,
                 totalCollateralValueInUsd,
                 healthFactor,
             ] = await Promise.all([
                 signer.provider.getBalance(userAddress),
                 weth.balanceOf(userAddress),
                 dsc.balanceOf(userAddress),
+                dsce.getCollateralBalanceOfUser(userAddress, weth.target),
                 dsce.getAccountCollateralValue(userAddress),
                 dsce.getHealthFactor(userAddress),
             ]);
@@ -57,20 +62,18 @@ export const UserProvider = ({children}) => {
                 ethBalance: ethBalance.toString(),
                 wethBalance: wethBalance.toString(),
                 dscBalance: dscBalance.toString(),
+                wethCollateralBalance: wethCollateralBalance.toString(),
                 totalCollateralValueInUsd: totalCollateralValueInUsd.toString(),
                 healthFactor: healthFactor.toString(),
             });
 
-            return contracts;
         } catch (err) {
             setError(err.message);
             console.error('Failed to fetch user data:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        } 
+    };
 
-    const connectWallet = useCallback(async () => {
+    const connectWallet = async () => {
         try {
             if (!window.ethereum) {
                 throw new Error('Please install MetaMask');
@@ -80,30 +83,30 @@ export const UserProvider = ({children}) => {
                 method: 'eth_requestAccounts'
             });
 
-            const userAddress = accounts[0];
-            const contractInstances = await fetchUserData(userAddress);
-            
-            if (contractInstances) {
-                setContracts(contractInstances);
-            }
+            // get contracts and store them
+            const contractInstances = await getContracts();
+
+            setContracts(contractInstances);
+            await fetchUserData();
         } catch (err) {
             setError(err.message);
             console.error('Wallet connection failed:', err);
         }
-    }, [fetchUserData]);
+    };
 
-    const disconnectWallet = useCallback(() => {
+    const disconnectWallet = async () => {
         setUserData(initialUserData);
-        setContracts(null);
-        setError(null);
-    }, []);
+        //setContracts(null);
+        //setError(null);
+    };
 
-    const refreshUserData = useCallback(() => {
+    const refreshUserData = async () => {
         if (userData.address) {
             fetchUserData(userData.address, contracts);
         }
-    }, [userData.address, contracts, fetchUserData]);
+    };
 
+    /*
     // Event listeners
     useEffect(() => {
         if (!window.ethereum) return;
@@ -126,6 +129,7 @@ export const UserProvider = ({children}) => {
             window.ethereum.removeListener('chainChanged', handleChainChanged);
         };
     }, [userData.address, connectWallet, disconnectWallet]);
+    */
 
     const contextValue = {
         userData,

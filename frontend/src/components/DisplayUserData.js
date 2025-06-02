@@ -9,7 +9,8 @@ export const DisplayUserData = () => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Remove the loadUserData function since we'll use the context's refreshUserData
-    
+    console.log('User Data:', userData);
+
     // Auto-load data when component mounts and user connects
     useEffect(() => {
         if (userData.address && contracts) {
@@ -50,13 +51,6 @@ export const DisplayUserData = () => {
                     {!userData.address ? (
                         <div className='connect-wallet-section'>
                             <p>Connect your wallet to view dashboard</p>
-                            <button 
-                                onClick={connectWallet}
-                                disabled={loading}
-                                className='connect-button'
-                            >
-                                {loading ? "Connecting..." : "Connect Wallet"}
-                            </button>
                         </div>
                     ) : (
                         <>
@@ -67,13 +61,6 @@ export const DisplayUserData = () => {
                                     className='refresh-button'
                                 >
                                     {loading ? "Loading..." : "Refresh Data"}
-                                </button>
-                                
-                                <button 
-                                    onClick={disconnectWallet}
-                                    className='disconnect-button'
-                                >
-                                    Disconnect Wallet
                                 </button>
                             </div>
 
@@ -102,6 +89,11 @@ export const DisplayUserData = () => {
                                 <div className='data-item'>
                                     <span className='data-label'>DSC Balance:</span>
                                     <span className='data-value'>{formatEther(userData.dscBalance)} DSC</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>WETH Collateral Balance:</span>
+                                    <span className='data-value'>{formatEther(userData.wethCollateralBalance)} WETH</span>
                                 </div>
 
                                 <div className='data-item'>
