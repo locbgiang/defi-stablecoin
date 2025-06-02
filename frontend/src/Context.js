@@ -1,9 +1,8 @@
-import {createContext, useState, useContext, useEffect} from 'react';
+import {createContext, useState, useContext, useEffect, useCallback} from 'react';
 import {getContracts} from './utils/ContractUtils';
 
 export const UserContext = createContext();
 
-// Custom hook to use the context
 export const useUser = () => {
     const context = useContext(UserContext);
     if (!context) {
@@ -12,210 +11,134 @@ export const useUser = () => {
     return context;
 };
 
-// Provider component
+const initialUserData = {
+    address: null,
+    ethBalance: '0',
+    wethBalance: '0',
+    dscBalance: '0',
+    totalCollateralValueInUsd: '0',
+    healthFactor: '0'
+};
+
 export const UserProvider = ({children}) => {
-    const [userData, setUserData] = useState({
-        address: null,
-        ethBalance: '0',
-        wethBalance: '0',
-        dscBalance: '0',
-        totalCollateralValueInUsd: '0',
-        healthFactor: '0'
-    });
+    const [userData, setUserData] = useState(initialUserData);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [contracts, setContracts] = useState(null);
 
-    const connectWallet = async () => {
-
+    // Single function to fetch user data
+    const fetchUserData = useCallback(async (userAddress, contractInstances) => {
+        if (!userAddress) return;
+        
         try {
             setLoading(true);
             setError(null);
 
-            // Check if MetaMask is installed
+            // Get contracts if not provided
+            const contracts = contractInstances || await getContracts();
+            const { dsce, dsc, weth, signer } = contracts;
+
+            const [
+                ethBalance,
+                wethBalance,
+                dscBalance,
+                totalCollateralValueInUsd,
+                healthFactor,
+            ] = await Promise.all([
+                signer.provider.getBalance(userAddress),
+                weth.balanceOf(userAddress),
+                dsc.balanceOf(userAddress),
+                dsce.getAccountCollateralValue(userAddress),
+                dsce.getHealthFactor(userAddress),
+            ]);
+
+            setUserData({
+                address: userAddress,
+                ethBalance: ethBalance.toString(),
+                wethBalance: wethBalance.toString(),
+                dscBalance: dscBalance.toString(),
+                totalCollateralValueInUsd: totalCollateralValueInUsd.toString(),
+                healthFactor: healthFactor.toString(),
+            });
+
+            return contracts;
+        } catch (err) {
+            setError(err.message);
+            console.error('Failed to fetch user data:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const connectWallet = useCallback(async () => {
+        try {
             if (!window.ethereum) {
                 throw new Error('Please install MetaMask');
             }
 
-            // Request account access
             const accounts = await window.ethereum.request({
                 method: 'eth_requestAccounts'
             });
 
             const userAddress = accounts[0];
-
-            // Get contracts
-            const contractInstances = await getContracts();
-            setContracts(contractInstances);
-
-            // Update address and fetch data
-            setUserData(prev => ({
-                ...prev,
-                address: userAddress
-            }))
-            await fetchUserDataWithContracts(userAddress, contractInstances);
+            const contractInstances = await fetchUserData(userAddress);
+            
+            if (contractInstances) {
+                setContracts(contractInstances);
+            }
         } catch (err) {
             setError(err.message);
             console.error('Wallet connection failed:', err);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [fetchUserData]);
 
-    // Function to fetch user data with contracts
-    const fetchUserDataWithContracts = async (userAddress, contractInstances) => {
-        try {
-            const { dsce, dsc, weth, signer } = contractInstances;
-            const [
-                ethBalance,
-                wethBalance,
-                dscBalance,
-                totalCollateralValueInUsd,
-                healthFactor,
-            ] = await Promise.all([
-                signer.provider.getBalance(userAddress), // Fix: add userAddress parameter
-                weth.balanceOf(userAddress),
-                dsc.balanceOf(userAddress),
-                dsce.getAccountCollateralValue(userAddress), // Fix: correct method name
-                dsce.getHealthFactor(userAddress),
-            ]);
-
-            setUserData({
-                address: userAddress,
-                ethBalance: ethBalance.toString(),
-                wethBalance: wethBalance.toString(),
-                dscBalance: dscBalance.toString(),
-                totalCollateralValueInUsd: totalCollateralValueInUsd.toString(),
-                healthFactor: healthFactor.toString(),
-            })
-        } catch (err) {
-            setError(err.message);
-            console.error('Failed to fetch user data:', err)
-        }
-    }
-
-    // Function to fetch user data
-    const fetchUserData = async () => {
-        if (!userData.address) return;
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const {dsce, dsc, weth, signer} = await getContracts();
-            const userAddress = await signer.getAddress();
-            
-            const [
-                ethBalance,
-                wethBalance,
-                dscBalance,
-                totalCollateralValueInUsd,
-                healthFactor,
-            ] = await Promise.all([
-                signer.provider.getBalance(userAddress), // Fix: add userAddress parameter
-                weth.balanceOf(userAddress),
-                dsc.balanceOf(userAddress),
-                dsce.getAccountCollateralValue(userAddress), // Fix: correct method name
-                dsce.getHealthFactor(userAddress),
-            ]);
-            
-            setUserData({
-                address: userAddress,
-                ethBalance: ethBalance.toString(),
-                wethBalance: wethBalance.toString(),
-                dscBalance: dscBalance.toString(),
-                totalCollateralValueInUsd: totalCollateralValueInUsd.toString(),
-                healthFactor: healthFactor.toString(),
-            });
-        } catch (err) {
-            setError(err.message)
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Function to refresh user data (can be called from any component)
-    const refreshUserData = async () => {
-        if (userData.address && contracts) {
-            await fetchUserDataWithContracts(userData.address, contracts);
-        } else if (userData.address) {
-            await fetchUserData();
-        }
-    };
-
-    // Function to disconnect wallet
-    const disconnectWallet = () => {
-        setUserData({
-            address: null,
-            ethBalance: '0',
-            wethBalance: '0',
-            dscBalance: '0',
-            totalCollateralValueInUsd: '0',
-            healthFactor: '0'
-        });
+    const disconnectWallet = useCallback(() => {
+        setUserData(initialUserData);
         setContracts(null);
-        setLoading(false);
-    };
+        setError(null);
+    }, []);
 
-    // Function to update specific balance (for optimization)
-    const updateBalance = (balanceType, newValue) => {
-        setUserData(prev => ({
-            ...prev,
-            [balanceType]: newValue
-        }));
-    };
-
-    // Listen for account changes
-    useEffect(() => {
-        if (window.ethereum) {
-            const handleAccountsChanged = (accounts) => {
-                if (accounts.length === 0) {
-                    disconnectWallet();
-                } else if (accounts[0] !== userData.address) {
-                    // Auto-connect to new account
-                    connectWallet();
-                }
-            };
-
-            const handleChainChanged = () => {
-                // Refresh page on network change
-                window.location.reload();
-            };
-
-            window.ethereum.on('accountsChanged', handleAccountsChanged);
-            window.ethereum.on('chainChanged', handleChainChanged);
-
-            return () => {
-                window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-                window.ethereum.removeListener('chainChanged', handleChainChanged);
-            };
-        }
-    }, [userData.address]);
-
-    // Auto-fetch data when address changes
-    useEffect(() => {
+    const refreshUserData = useCallback(() => {
         if (userData.address) {
-            fetchUserDataWithContracts(userData.address, contracts);
+            fetchUserData(userData.address, contracts);
         }
-    }, [userData.address, contracts]);
+    }, [userData.address, contracts, fetchUserData]);
+
+    // Event listeners
+    useEffect(() => {
+        if (!window.ethereum) return;
+
+        const handleAccountsChanged = (accounts) => {
+            if (accounts.length === 0) {
+                disconnectWallet();
+            } else if (accounts[0] !== userData.address) {
+                connectWallet();
+            }
+        };
+
+        const handleChainChanged = () => window.location.reload();
+
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
+
+        return () => {
+            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+            window.ethereum.removeListener('chainChanged', handleChainChanged);
+        };
+    }, [userData.address, connectWallet, disconnectWallet]);
 
     const contextValue = {
-        // State
         userData,
         loading,
         error,
         contracts,
-
-        // Functions
         connectWallet,
         disconnectWallet,
-        fetchUserData,
         refreshUserData,
-        updateBalance
     };
 
     return (
-        <UserContext.Provider value ={contextValue}>
+        <UserContext.Provider value={contextValue}>
             {children}
         </UserContext.Provider>
     );
