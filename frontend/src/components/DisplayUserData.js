@@ -1,65 +1,39 @@
 import { useState, useEffect } from "react"; 
 import { getContracts } from "../utils/ContractUtils";
 import { formatEther, parseEther, Contract } from "ethers";
+import { useUser } from "../Context";
 import './DisplayUserData.css';
 
 export const DisplayUserData = () => {
-    // const [userData, setUserData] = useState(null); 
-    const { userData, connectWallet, disconnectWallet, loading, error } = useUser();
-    // const [loading, setLoading] = useState(false);
-    // const [error, setError] = useState(null);
+    const { userData, connectWallet, disconnectWallet, loading, error, contracts, refreshUserData } = useUser();
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const loadUserData = async () => {
-        try {
-            // setLoading(true);
-            // setError("");
-
-            // const { dsce, dsc, weth, signer } = await getContracts();
-            // const userAddress = await signer.getAddress();
-
-            // Get user's balances and positions
-            const [
-                wethBalance,
-                dscBalance,
-                collateralBalance,
-                healthFactor,
-
-            ] = await Promise.all([
-                userData.weth.balanceOf(userAddress),
-                userData.dsc.balanceOf(userAddress),
-                dsce.getCollateralBalanceOfUser(userAddress, weth.target),
-                dsce.getHealthFactor(userAddress)
-            ]);
-
-            setUserData({
-                address: userAddress,
-                wethBalance: formatEther(wethBalance),
-                dscBalance: formatEther(dscBalance),
-                collateralBalance: formatEther(collateralBalance),
-                healthFactor: healthFactor.toString(),
-                isHealthy: healthFactor > 1000000000000000000n // > 1.0 in 18 decimals
-
-            })
-        } catch (err) {
-            console.error("Error loading user data:", err);
-            setError("Failed to load user data. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    // Auto-load data when component mounts
+    // Remove the loadUserData function since we'll use the context's refreshUserData
+    
+    // Auto-load data when component mounts and user connects
     useEffect(() => {
-        loadUserData();
-    }, []);
+        if (userData.address && contracts) {
+            refreshUserData();
+        }
+    }, [userData.address, contracts]);
 
     const formatAddress = (address) => {
+        if (!address) return 'Not connected';
         return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
     }
 
     const toggleDropdown = () => {
         setIsExpanded(!isExpanded);
+    }
+
+    const formatHealthFactor = (healthFactor) => {
+        if (!healthFactor || healthFactor === '0') return '0.0000';
+        return (parseFloat(healthFactor) / 1e18).toFixed(4);
+    }
+
+    const isHealthy = (healthFactor) => {
+        if (!healthFactor || healthFactor === '0') return false;
+        return parseFloat(healthFactor) > 1e18; // > 1.0 in 18 decimals
     }
 
     return (
@@ -73,57 +47,83 @@ export const DisplayUserData = () => {
 
             {isExpanded && (
                 <div className='user-data-content'>
-
-                    <button 
-                        onClick={loadUserData}
-                        disabled={loading}
-                        className='refresh-button'
-                    >
-                        {loading ? "Loading..." : "Refresh Data"}
-                    </button>
-
-                    {error && (
-                        <div className='error-message'>
-                            {error}
+                    {!userData.address ? (
+                        <div className='connect-wallet-section'>
+                            <p>Connect your wallet to view dashboard</p>
+                            <button 
+                                onClick={connectWallet}
+                                disabled={loading}
+                                className='connect-button'
+                            >
+                                {loading ? "Connecting..." : "Connect Wallet"}
+                            </button>
                         </div>
-                    )}
-
-                    {userData && (
-                        <div className='user-data-grid'>
-                            <div className='data-item'>
-                                <span className='data-label'>Wallet Address:</span>
-                                <span className='data-value'>{formatAddress(userData.address)}</span>
+                    ) : (
+                        <>
+                            <div className='wallet-actions'>
+                                <button 
+                                    onClick={refreshUserData}
+                                    disabled={loading}
+                                    className='refresh-button'
+                                >
+                                    {loading ? "Loading..." : "Refresh Data"}
+                                </button>
+                                
+                                <button 
+                                    onClick={disconnectWallet}
+                                    className='disconnect-button'
+                                >
+                                    Disconnect Wallet
+                                </button>
                             </div>
 
-                            <div className='data-item'>
-                                <span className='data-label'>WETH Balance:</span>
-                                <span className='data-value'>{userData.wethBalance} WETH</span>
-                            </div>
-
-                            <div className='data-item'>
-                                <span className='data-label'>DSC Balance:</span>
-                                <span className='data-value'>{userData.dscBalance} DSC</span>
-                            </div>
-
-                            <div className='data-item'>
-                                <span className='data-label'>Collateral Deposited:</span>
-                                <span className='data-value'>{userData.collateralBalance} WETH</span>
-                            </div>
-
-                            <div className='data-item'>
-                                <span className='data-label'>Health Factor:</span>
-                                <span className={`data-value health-factor ${userData.isHealthy ? 'healthy' : 'unhealthy'}`}>
-                                    {(parseFloat(userData.healthFactor) / 1e18).toFixed(4)}
-                                    {userData.isHealthy ? " ✓" : " ⚠️"}
-                                </span>
-                            </div>
-
-                            {!userData.isHealthy && (
-                                <div className='warning-message'>
-                                    ⚠️ Warning: Low health factor! Consider adding more collateral or repaying DSC.
+                            {error && (
+                                <div className='error-message'>
+                                    {error}
                                 </div>
                             )}
-                        </div>
+
+                            <div className='user-data-grid'>
+                                <div className='data-item'>
+                                    <span className='data-label'>Wallet Address:</span>
+                                    <span className='data-value'>{formatAddress(userData.address)}</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>ETH Balance:</span>
+                                    <span className='data-value'>{formatEther(userData.ethBalance)} ETH</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>WETH Balance:</span>
+                                    <span className='data-value'>{formatEther(userData.wethBalance)} WETH</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>DSC Balance:</span>
+                                    <span className='data-value'>{formatEther(userData.dscBalance)} DSC</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>Collateral Value (USD):</span>
+                                    <span className='data-value'>${formatEther(userData.totalCollateralValueInUsd)}</span>
+                                </div>
+
+                                <div className='data-item'>
+                                    <span className='data-label'>Health Factor:</span>
+                                    <span className={`data-value health-factor ${isHealthy(userData.healthFactor) ? 'healthy' : 'unhealthy'}`}>
+                                        {formatHealthFactor(userData.healthFactor)}
+                                        {isHealthy(userData.healthFactor) ? " ✓" : " ⚠️"}
+                                    </span>
+                                </div>
+
+                                {!isHealthy(userData.healthFactor) && userData.healthFactor !== '0' && (
+                                    <div className='warning-message'>
+                                        ⚠️ Warning: Low health factor! Consider adding more collateral or repaying DSC.
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
             )}

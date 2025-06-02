@@ -73,16 +73,16 @@ export const UserProvider = ({children}) => {
                 totalCollateralValueInUsd,
                 healthFactor,
             ] = await Promise.all([
-                signer.getBalance(),
+                signer.provider.getBalance(userAddress), // Fix: add userAddress parameter
                 weth.balanceOf(userAddress),
                 dsc.balanceOf(userAddress),
-                dsce.getAccountCollateralValue(userAddress),
+                dsce.getAccountCollateralValue(userAddress), // Fix: correct method name
                 dsce.getHealthFactor(userAddress),
             ]);
 
             setUserData({
                 address: userAddress,
-                ethBalance: wethBalance.toString(),
+                ethBalance: ethBalance.toString(),
                 wethBalance: wethBalance.toString(),
                 dscBalance: dscBalance.toString(),
                 totalCollateralValueInUsd: totalCollateralValueInUsd.toString(),
@@ -105,7 +105,6 @@ export const UserProvider = ({children}) => {
             const {dsce, dsc, weth, signer} = await getContracts();
             const userAddress = await signer.getAddress();
             
-            // add data fetching logic here
             const [
                 ethBalance,
                 wethBalance,
@@ -113,12 +112,13 @@ export const UserProvider = ({children}) => {
                 totalCollateralValueInUsd,
                 healthFactor,
             ] = await Promise.all([
-                signer.getBalance(),
+                signer.provider.getBalance(userAddress), // Fix: add userAddress parameter
                 weth.balanceOf(userAddress),
                 dsc.balanceOf(userAddress),
-                dsce.getCollateralValueInUsd(userAddress),
+                dsce.getAccountCollateralValue(userAddress), // Fix: correct method name
                 dsce.getHealthFactor(userAddress),
             ]);
+            
             setUserData({
                 address: userAddress,
                 ethBalance: ethBalance.toString(),
@@ -136,7 +136,9 @@ export const UserProvider = ({children}) => {
 
     // Function to refresh user data (can be called from any component)
     const refreshUserData = async () => {
-        if (!userData.address) {
+        if (userData.address && contracts) {
+            await fetchUserDataWithContracts(userData.address, contracts);
+        } else if (userData.address) {
             await fetchUserData();
         }
     };
@@ -152,7 +154,7 @@ export const UserProvider = ({children}) => {
             healthFactor: '0'
         });
         setContracts(null);
-        setLoading(null);
+        setLoading(false);
     };
 
     // Function to update specific balance (for optimization)
@@ -182,15 +184,20 @@ export const UserProvider = ({children}) => {
 
             window.ethereum.on('accountsChanged', handleAccountsChanged);
             window.ethereum.on('chainChanged', handleChainChanged);
-        };
+
+            return () => {
+                window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+                window.ethereum.removeListener('chainChanged', handleChainChanged);
+            };
+        }
     }, [userData.address]);
 
     // Auto-fetch data when address changes
     useEffect(() => {
         if (userData.address) {
-            fetchUserDataWithContracts(userData.address);
+            fetchUserDataWithContracts(userData.address, contracts);
         }
-    }, [userData.address]);
+    }, [userData.address, contracts]);
 
     const contextValue = {
         // State
