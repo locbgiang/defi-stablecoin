@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract, formatEther } from "ethers";
+import { useUser } from "../Context";
 import './WethConverter.css';
 
 export const WethConverter = () => { 
+    const {userData,refreshUserData, contracts} = useUser();
     const [ethAmount, setEthAmount] = useState("");
     const [wethAmount, setWethAmount] = useState("");
     const [message, setMessage] = useState("");
@@ -12,15 +14,16 @@ export const WethConverter = () => {
     const convertEthToWeth = async () => {
         try {
             setMessage("Processing ETH to WETH conversion...");
-            const { weth } = await getContracts();
+            // const { weth } = await getContracts();
             const ethAmountWei = parseEther(ethAmount);
-            const wrapTx = await weth.deposit({
+            const wrapTx = await contracts.weth.deposit({
                 value: ethAmountWei,
             });
 
             setMessage("Wrapping ETH to WETH...");
             await wrapTx.wait();
 
+            refreshUserData();
             setMessage("Successfully converted ETH to WETH.");
         } catch (error) {
             console.error(error);
@@ -31,13 +34,14 @@ export const WethConverter = () => {
     const unwrapWeth = async () => {
         try {
             setMessage("Processing WETH to ETH conversion...");
-            const { weth } = await getContracts();
+            // const { weth } = await getContracts();
             const wethAmountWei = parseEther(wethAmount);
-            const unWrapTx = await weth.withdraw(wethAmountWei);
+            const unWrapTx = await contracts.weth.withdraw(wethAmountWei);
 
             setMessage("Unwrapping WETH to ETH...");
             await unWrapTx.wait();
 
+            refreshUserData();
             setMessage("Successfully unwrapped WETH to ETH");
         } catch (error) {
             console.error(error);

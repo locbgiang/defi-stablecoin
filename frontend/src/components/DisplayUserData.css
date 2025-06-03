@@ -159,3 +159,45 @@
 .data-value::after {
     display: none;
 }
+
+.user-data-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.user-internal-data,
+.contract-data {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ff6b35;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #444;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .user-data-sections {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Override the existing user-data-grid to remove conflicting styles */
+.user-data-grid {
+    display: block; /* Changed from grid to block */
+    background-color: transparent; /* Remove background since sections have their own */
+    border: none; /* Remove border since sections have their own */
+    padding: 0; /* Remove padding since sections have their own */
+}

@@ -2,13 +2,15 @@
 import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
+import { useUser } from '../Context';
 import './DepositCollateralAndMintDsc.css'; // Assuming you have a CSS file for styles
 
 export const DepositCollateralAndMintDsc = () => {
-    const [wethAmount, setWethAmount] = useState("");
-    const [dscAmount, setDscAmount] = useState("");
+    const { userData } = useUser(); 
+    //const [wethAmount, setWethAmount] = useState("");
+    //const [dscAmount, setDscAmount] = useState("");
     const [message, setMessage] = useState("");
-    const [wethBalance, setWethBalance] = useState("");
+    //const [wethBalance, setWethBalance] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -29,22 +31,6 @@ export const DepositCollateralAndMintDsc = () => {
         const balanceInEth = parseFloat(balance) / 1e18;
         return `${balanceInEth.toFixed(6)} WETH`;
     }
-
-    // fetch WETH balance on component mount
-    const updateWethBalance = async () => {
-        try {
-            const { signer, weth } = await getContracts();
-            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
-            const balance = await weth.balanceOf(await signer.getAddress());
-            setWethBalance(balance.toString());
-        } catch (error) {
-            console.error("Error fetching WETH balance:", error);
-        }
-    };
-
-    useEffect(() => {
-        updateWethBalance();
-    }, []);
 
     // Calculate safe DSC amount based on collateral (45% of collateral value)
     const calculateSafeDscAmount = () => {

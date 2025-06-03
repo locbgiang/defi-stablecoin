@@ -20,7 +20,7 @@ export const DisplayUserData = () => {
 
     const formatAddress = (address) => {
         if (!address) return 'Not connected';
-        return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        return `${address}`;
     }
 
     const toggleDropdown = () => {
@@ -75,46 +75,52 @@ export const DisplayUserData = () => {
                                     <span className='data-label'>Wallet Address:</span>
                                     <span className='data-value'>{formatAddress(userData.address)}</span>
                                 </div>
+                                <div className='user-data-sections'>                                
+                                    <div className='user-internal-data'>                                
+                                        <div className='data-item'>
+                                            <span className='data-label'>ETH Balance:</span>
+                                            <span className='data-value'>{formatEther(userData.ethBalance)} ETH</span>
+                                        </div>
 
-                                <div className='data-item'>
-                                    <span className='data-label'>ETH Balance:</span>
-                                    <span className='data-value'>{formatEther(userData.ethBalance)} ETH</span>
-                                </div>
+                                        <div className='data-item'>
+                                            <span className='data-label'>WETH Balance:</span>
+                                            <span className='data-value'>{formatEther(userData.wethBalance)} WETH</span>
+                                        </div>
 
-                                <div className='data-item'>
-                                    <span className='data-label'>WETH Balance:</span>
-                                    <span className='data-value'>{formatEther(userData.wethBalance)} WETH</span>
-                                </div>
-
-                                <div className='data-item'>
-                                    <span className='data-label'>DSC Balance:</span>
-                                    <span className='data-value'>{formatEther(userData.dscBalance)} DSC</span>
-                                </div>
-
-                                <div className='data-item'>
-                                    <span className='data-label'>WETH Collateral Balance:</span>
-                                    <span className='data-value'>{formatEther(userData.wethCollateralBalance)} WETH</span>
-                                </div>
-
-                                <div className='data-item'>
-                                    <span className='data-label'>Collateral Value (USD):</span>
-                                    <span className='data-value'>${formatEther(userData.totalCollateralValueInUsd)}</span>
-                                </div>
-
-                                <div className='data-item'>
-                                    <span className='data-label'>Health Factor:</span>
-                                    <span className={`data-value health-factor ${isHealthy(userData.healthFactor) ? 'healthy' : 'unhealthy'}`}>
-                                        {formatHealthFactor(userData.healthFactor)}
-                                        {isHealthy(userData.healthFactor) ? " ✓" : " ⚠️"}
-                                    </span>
-                                </div>
-
-                                {!isHealthy(userData.healthFactor) && userData.healthFactor !== '0' && (
-                                    <div className='warning-message'>
-                                        ⚠️ Warning: Low health factor! Consider adding more collateral or repaying DSC.
+                                        <div className='data-item'>
+                                            <span className='data-label'>DSC Balance:</span>
+                                            <span className='data-value'>{formatEther(userData.dscBalance)} DSC</span>
+                                        </div>
                                     </div>
-                                )}
+
+                                    <div className='contract-data'>
+                                        <div className='data-item'>
+                                            <span className='data-label'>Collateral Value (USD):</span>
+                                            <span className='data-value'>${formatEther(userData.totalCollateralValueInUsd)}</span>
+                                        </div>
+
+                                        <div className='data-item'>
+                                            <span className='data-label'>WETH Collateral Balance:</span>
+                                            <span className='data-value'>{formatEther(userData.wethCollateralBalance)} WETH</span>
+                                        </div>
+
+                                        <div className='data-item'>
+                                            <span className='data-label'>Health Factor:</span>
+                                            <span className={`data-value health-factor ${isHealthy(userData.healthFactor) ? 'healthy' : 'unhealthy'}`}>
+                                                {formatHealthFactor(userData.healthFactor)}
+                                                {isHealthy(userData.healthFactor) ? " ✓" : " ⚠️"}
+                                            </span>
+                                        </div>
+
+                                        {!isHealthy(userData.healthFactor) && userData.healthFactor !== '0' && (
+                                            <div className='warning-message'>
+                                                ⚠️ Warning: Low health factor! Consider adding more collateral or repaying DSC.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
+                            
                         </>
                     )}
                 </div>
