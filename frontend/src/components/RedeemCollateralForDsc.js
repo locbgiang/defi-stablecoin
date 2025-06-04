@@ -4,7 +4,7 @@ import { parseEther, id } from "ethers";
 import { useUser } from '../Context';
 
 export const RedeemCollateralForDsc = () => {
-    const { userData, connectWallet, disconnectWallet, loading, error } = useUser();
+    const { userData, contracts, refreshUserData } = useUser();
     const [collateralAmount, setCollateralAmount] = useState("");
     const [dscToBurnAmount, setDscToBurnAmount] = useState("");
     const [message, setMessage] = useState("");
@@ -43,19 +43,29 @@ export const RedeemCollateralForDsc = () => {
                 )
             ])
             */
-            console.log(userData)
+            console.log(userData);
 
-            
+            const wethCollateralAmount = userData.wethCollateralBalance;
+            const dscBalanceToBurn = userData.dscBalance;
+
+            // approve dsc engine to spend user dsc
+            setMessage('Approving DSCE to burn DSC...');
+            const approveTx = await contracts.dsc.approve(
+                contracts.dsce.getAddress(),
+                dscBalanceToBurn
+            );
+            await approveTx.wait();
+
             // Withdrawing all collateral
             setMessage('Withdrawing all collateral...');
-            const withdrawTx = await dsce.redeemCollateralForDsc(
-                weth.target,
-                colBalance,
-                dscBalance
+            const withdrawTx = await contracts.dsce.redeemCollateralForDsc(
+                contracts.weth.target,
+                wethCollateralAmount,
+                dscBalanceToBurn
             )
             await withdrawTx.wait();
             
-
+            refreshUserData();
             setMessage('Success! All collateral withdrawn.');
         } catch (error) {
             console.error('Error withdrawing all collateral:', error);
