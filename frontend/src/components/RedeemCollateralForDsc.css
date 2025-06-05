@@ -1,0 +1,317 @@
+.redeem-container {
+    padding: 0;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    margin: 24px 0;
+    font-family: 'Courier New', 'Liberation Mono', monospace;
+    color: #e0e0e0;
+    max-width: 800px;
+    overflow: hidden;
+}
+
+.redeem-header {
+    padding: 16px 24px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+    transition: background-color 0.2s ease;
+}
+
+.redeem-header:hover {
+    background-color: #242424;
+}
+
+.redeem-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-arrow {
+    color: #e31b23;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.expanded {
+    transform: rotate(180deg);
+}
+
+.redeem-content {
+    padding: 24px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.redeem-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.redeem-sections-row {
+    display: flex;
+    gap: 24px;
+}
+
+.redeem-section {
+    background-color: #242424;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.redeem-section.flex-item {
+    flex: 1;
+}
+
+.redeem-section h2 {
+    margin: 0 0 20px 0;
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e31b23;
+    padding-bottom: 8px;
+}
+
+.redeem-section h3 {
+    margin: 0 0 20px 0;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e31b23;
+    padding-bottom: 8px;
+}
+
+.input-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+}
+
+.input-wrapper {
+    flex: 1;
+}
+
+.redeem-input {
+    padding: 12px 16px;
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.redeem-input:focus {
+    outline: none;
+    border-color: #e31b23;
+    background-color: #404040;
+}
+
+.redeem-input::placeholder {
+    color: #888;
+}
+
+.redeem-button {
+    padding: 12px 24px;
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.redeem-button:hover:not(:disabled) {
+    background-color: #e31b23;
+    border-color: #e31b23;
+    color: #000;
+    transform: translateY(-1px);
+}
+
+.redeem-button:active {
+    transform: translateY(0);
+}
+
+.redeem-button:disabled {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.redeem-all-section {
+    border: 2px solid #444;
+    background-color: #1f1f1f;
+}
+
+.redeem-all-button {
+    padding: 16px 24px;
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.redeem-all-button:hover:not(:disabled) {
+    background-color: #e31b23;
+    border-color: #e31b23;
+    color: #000;
+    transform: translateY(-1px);
+}
+
+.redeem-all-button:active {
+    transform: translateY(0);
+}
+
+.redeem-all-button:disabled {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.warning-text {
+    margin: 0;
+    color: #ffb84d;
+    font-size: 0.9rem;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-message {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.status-message.success {
+    background-color: #1a2a1a;
+    border: 1px solid #4ade80;
+    color: #4ade80;
+}
+
+.status-message.error {
+    background-color: #2a1a1a;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+}
+
+.status-message.processing {
+    background-color: #2a2a1a;
+    border: 1px solid #e31b23;
+    color: #e31b23;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading animation for processing states */
+.status-message.processing::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    border: 2px solid transparent;
+    border-top: 2px solid #e31b23;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .redeem-content {
+        padding: 16px;
+    }
+
+    .redeem-sections {
+        gap: 16px;
+    }
+
+    .redeem-sections-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .redeem-section {
+        padding: 16px;
+    }
+
+    .redeem-section h2,
+    .redeem-section h3 {
+        font-size: 1rem;
+        margin-bottom: 16px;
+    }
+
+    .input-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .redeem-title {
+        font-size: 1rem;
+    }
+}
