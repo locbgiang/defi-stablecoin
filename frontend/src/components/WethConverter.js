@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { getContracts } from "../utils/ContractUtils";
-import { parseEther, Contract, formatEther } from "ethers";
+import { useState } from "react";
+import { parseEther } from "ethers";
 import { useUser } from "../Context";
 import './WethConverter.css';
 

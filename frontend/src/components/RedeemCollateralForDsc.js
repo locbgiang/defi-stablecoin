@@ -166,7 +166,7 @@ export const RedeemCollateralForDsc = () => {
                             >
                                 Redeem All
                             </button>
-                            <p className="warning-text">⚠️ This will withdraw all your collateral. Make sure you have no DSC minted or this will fail.</p>
+                            <p className="warning-text">⚠️ This will burn all your DSC and withdraw all your collateral.</p>
                         </div>
                     </div>
 

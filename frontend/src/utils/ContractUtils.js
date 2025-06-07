@@ -3,6 +3,7 @@ import { contractAddresses } from "../contracts/ContractAddresses";
 import DSCEngineABI from "../contracts/DSCEngineABI.json";
 import DecentralizedStableCoinABI from "../contracts/DecentralizedStableCoinABI.json";
 import WethABI from "../contracts/WethABI.json";
+import WbtcABI from "../contracts/WbtcABI.json"
 
 /**
  * @author: Loc Giang
@@ -49,5 +50,11 @@ export const getContracts = async () => {
         signer
     )
 
-    return { dsce, dsc, weth, signer };
+    const wbtc = new Contract(
+        contractAddresses.WBTC,
+        WbtcABI,
+        signer
+    )
+
+    return { dsce, dsc, weth, wbtc, signer };
 };
