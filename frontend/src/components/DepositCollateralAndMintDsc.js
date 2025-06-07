@@ -3,14 +3,17 @@ import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract } from "ethers";
 import { useUser } from '../Context';
-import './DepositCollateralAndMintDsc.css'; // Assuming you have a CSS file for styles
+import './DepositCollateralAndMintDsc.css';
 
 export const DepositCollateralAndMintDsc = () => {
     const { userData, refreshUserData, contracts } = useUser(); 
-    const [wethAmount, setWethAmount] = useState("");
-    const [dscAmount, setDscAmount] = useState("");
+    
+    // Separate state for each section
+    const [depositWethAmount, setDepositWethAmount] = useState("");
+    const [mintDscAmount, setMintDscAmount] = useState("");
+    const [combinedWethAmount, setCombinedWethAmount] = useState("");
+    
     const [message, setMessage] = useState("");
-    //const [wethBalance, setWethBalance] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -25,134 +28,116 @@ export const DepositCollateralAndMintDsc = () => {
         return 'status-message processing';
     }
 
-    // Format balance for display
-    const formatBalance = (balance) => {
-        if (!balance) return '0 WETH';
-        const balanceInEth = parseFloat(balance) / 1e18;
-        return `${balanceInEth.toFixed(6)} WETH`;
-    }
-
-    // Calculate safe DSC amount based on collateral (45% of collateral value)
-    const calculateSafeDscAmount = async () => {
+    // Calculate 50% DSC amount for combined action
+    const calculateDscAmount = async (wethAmount) => {
         try {
-            // Convert WETH amount to wei
+            if (!wethAmount) return 0;
+            
             const wethAmountWei = parseEther(wethAmount);
-
-            // Get USD value of the WETH collateral
             const collateralValueInUsd = await contracts.dsce.getUsdValue(
                 contracts.weth.target,
                 wethAmountWei
             );
 
-            // Calculate 45% of the USD value for safe DSC minting
-            // Since DSC is pegged to $1, we can mint up to 45% of collateral USD value
-            const safeUsdAmount = collateralValueInUsd * BigInt(45) / BigInt(100);
-
-            // Convert back to ether uints for display (DSC has 18 decimals like eth)
-            const safeDscAmount = Number(safeUsdAmount) / 1e18;
-
-            setDscAmount(safeDscAmount.toFixed(2));
+            // Calculate 50% of the USD value for DSC minting
+            const dscAmount = collateralValueInUsd * BigInt(50) / BigInt(100);
+            return Number(dscAmount) / 1e18;
         } catch (error) {
-            console.error('Error calculating safe DSC amount:', error)
-            setMessage('Error calculating safe DSC amount. Please check your WETH input.');
+            console.error('Error calculating DSC amount:', error);
+            return 0;
         }
     };
 
+    // Individual deposit collateral function
     const depositCollateral = async () => {
         try {
+            setIsLoading(true);
             setMessage("Processing deposit collateral...");
-            const wethAmountWei = parseEther(wethAmount);
+            
+            const wethAmountWei = parseEther(depositWethAmount);
 
-            setMessage("Approving WETH for DSCEngine");
-            // Approval transaction
+            setMessage("Approving WETH for DSCEngine...");
             const approveTx = await contracts.weth.approve(
                 await contracts.dsce.getAddress(),
                 wethAmountWei
-            )
+            );
             await approveTx.wait();
-            setMessage("Approval successful");
 
+            setMessage("Depositing collateral...");
             const depositTx = await contracts.dsce.depositCollateral(
                 contracts.weth.target,
                 wethAmountWei
             );
             await depositTx.wait();
 
+            setDepositWethAmount("");
             refreshUserData();
-            setMessage("Collateral deposit successful");
+            setMessage("Success! Collateral deposited.");
         } catch (err) {
             console.error(err);
             setMessage("Error: " + (err.message));
+        } finally {
+            setIsLoading(false);
         }
     }
 
+    // Individual mint DSC function
     const mintDsc = async () => {
         try {
+            setIsLoading(true);
             setMessage("Processing mint DSC...");
-            const dscAmountWei = parseEther(dscAmount);
+            
+            const dscAmountWei = parseEther(mintDscAmount);
 
-            setMessage("Minting DSC");
-            const mintTx = await contracts.dsce.mintDsc(
-                dscAmountWei
-            );
+            setMessage("Minting DSC...");
+            const mintTx = await contracts.dsce.mintDsc(dscAmountWei);
             await mintTx.wait();
 
+            setMintDscAmount("");
             refreshUserData();
-            setMessage("Minting successful");
+            setMessage("Success! DSC minted.");
         } catch (err) {
             console.error(err);
             setMessage("Error: " + (err.message));
+        } finally {
+            setIsLoading(false);
         }
     }
 
+    // Combined deposit and mint (automatic 50%)
     const depositCollateralAndMintDsc = async () => {
         try {
+            setIsLoading(true);
             setMessage("Processing deposit and mint...");
 
-            // const weth = new Contract(WETH_ADDRESS, WETH_ABI, signer);
+            const wethAmountWei = parseEther(combinedWethAmount);
+            
+            // Calculate 50% DSC amount automatically
+            const dscAmount = await calculateDscAmount(combinedWethAmount);
+            const dscAmountWei = parseEther(dscAmount.toString());
 
-            // convert amounts to wei
-            const wethAmountWei = parseEther(wethAmount);
-            const dscAmountWei = parseEther(dscAmount);
-
-            // 1. approve dscengine to spend weth
             setMessage("Approving WETH for DSCEngine...");
-            console.log("WETH amount (wei):", wethAmountWei.toString());
-            console.log("DSC amount (wei):", dscAmountWei.toString());
-
-            // approval transaction
             const approveTx = await contracts.weth.approve(
                 await contracts.dsce.getAddress(), 
                 wethAmountWei
             );
             await approveTx.wait();
-            setMessage("Approval successful. Now depositing collateral and minting DSC...");
 
-            try {
-                setMessage("Depositing collateral...");
-                const depositTx = await contracts.dsce.depositCollateral(
-                    contracts.weth.target,
-                    wethAmountWei
-                );
-                await depositTx.wait();
+            setMessage("Depositing collateral...");
+            const depositTx = await contracts.dsce.depositCollateral(
+                contracts.weth.target,
+                wethAmountWei
+            );
+            await depositTx.wait();
 
-                setMessage("Minting DSC...");
-                const mintTx = await contracts.dsce.mintDsc(
-                    dscAmountWei
-                );
-                await mintTx.wait();
-                
-                setMessage("Success! Deposited WETH and minted DSC.");
-
-                // clear inputs after successful transaction
-                setWethAmount("");
-                setDscAmount("");
-
-                refreshUserData(); // Refresh user data to update balances
-            } catch (error) {
-                console.error("Contract error:", error);
-                setMessage("Error in contract call: " + (error.message || "Transaction failed"));
-            }
+            setMessage("Minting DSC (50% of collateral value)...");
+            const mintTx = await contracts.dsce.mintDsc(dscAmountWei);
+            await mintTx.wait();
+            
+            setCombinedWethAmount("");
+            refreshUserData();
+            setMessage(`Success! Deposited ${combinedWethAmount} WETH and minted ${dscAmount.toFixed(2)} DSC.`);
+            
         } catch (error) {
             console.error(error);
             setMessage("Error: " + (error.message || "Something went wrong"));
@@ -177,76 +162,97 @@ export const DepositCollateralAndMintDsc = () => {
             {isExpanded && (
                 <div className='deposit-mint-content'>
                     <div className='deposit-mint-sections'>
-                        <div className='input-section'>
-                            <h3>WETH Collateral</h3>
+                        {/* Horizontal sections for deposit and mint */}
+                        <div className='horizontal-sections'>
+                            <div className='input-section'>
+                                <h3> Deposit Collateral </h3>
+                                <div className='input-group'>
+                                    <input 
+                                        className='deposit-input'
+                                        type="number"
+                                        placeholder="Enter WETH amount to deposit"
+                                        value={depositWethAmount}
+                                        onChange={(e) => setDepositWethAmount(e.target.value)}
+                                        disabled={isLoading}
+                                    />
+                                    <button
+                                        className='individual-action-button deposit-button'
+                                        onClick={depositCollateral}
+                                        disabled={isLoading || !depositWethAmount}
+                                    >
+                                        {isLoading ? "Processing..." : "Deposit Collateral"}
+                                    </button>
+                                    <p className='section-description'>
+                                        Deposit WETH as collateral
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className='input-section'>
+                                <h3> Mint DSC </h3>
+                                <div className='input-group'>
+                                    <input 
+                                        className='deposit-input'
+                                        type="number"
+                                        placeholder="Enter DSC amount to mint"
+                                        value={mintDscAmount}
+                                        onChange={(e) => setMintDscAmount(e.target.value)}
+                                        disabled={isLoading}
+                                    />
+                                    <button
+                                        className='individual-action-button mint-button'
+                                        onClick={mintDsc}
+                                        disabled={isLoading || !mintDscAmount}
+                                    >
+                                        {isLoading ? "Processing..." : "Mint DSC"}
+                                    </button>
+                                    <p className='section-description'>
+                                        Mint DSC using existing collateral
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Combined section at the bottom */}
+                        <div className='input-section combined-section'>
+                            <h3> Deposit and Mint</h3>
                             <div className='input-group'>
                                 <input 
                                     className='deposit-input'
                                     type="number"
                                     placeholder="Enter WETH amount"
-                                    value={wethAmount}
-                                    onChange={(e) => setWethAmount(e.target.value)}
-                                    onBlur={calculateSafeDscAmount}
+                                    value={combinedWethAmount}
+                                    onChange={(e) => setCombinedWethAmount(e.target.value)}
                                     disabled={isLoading}
                                 />
-                                <button
-                                    className='individual-action-button'
-                                    onClick={depositCollateral}
-                                    disabled={isLoading || !wethAmount}
-                                >
-                                    {isLoading ? "Processing..." : "Deposit Collateral Only"}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className='input-section'>
-                            <h3>DSC to Mint</h3>
-                            <div className='input-group'>
-                                <input 
-                                    className='deposit-input'
-                                    type="number"
-                                    placeholder="Enter DSC amount"
-                                    value={dscAmount}
-                                    onChange={(e) => setDscAmount(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                <button 
-                                    className='calculate-button'
-                                    onClick={calculateSafeDscAmount}
-                                    disabled={isLoading || !wethAmount}
-                                >
-                                    Calculate Safe Amount (45%)
-                                </button>
-                                <button
-                                    className='individual-action-button'
-                                    onClick={mintDsc}
-                                    disabled={isLoading || !dscAmount}
-                                >
-                                    {isLoading ? "Processing..." : "Mint DSC Only"}
-                                </button>
-                                <div className='recommendation-text'>
-                                    Recommended: 45% of collateral value
+                                <div className='auto-calculation-display'>
+                                    {combinedWethAmount && (
+                                        <span className='calculation-text'>
+                                            Will mint: ~{(parseFloat(combinedWethAmount || 0) * 0.5 * 2000).toFixed(2)} DSC
+                                            <small>(50% of collateral value)</small>
+                                        </span>
+                                    )}
                                 </div>
+                                <button
+                                    className='main-action-button'
+                                    onClick={depositCollateralAndMintDsc}
+                                    disabled={isLoading || !combinedWethAmount}
+                                >
+                                    {isLoading && <span className="loading-spinner"></span>}
+                                    {isLoading ? "Processing..." : "Deposit & Mint (50%)"}
+                                </button>
+                                <p className='section-description combined-description'>
+                                    Automatically deposits WETH and mints DSC at 50% collateral ratio
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className='action-section'>
-                        <button
-                            className='main-action-button'
-                            onClick={depositCollateralAndMintDsc}
-                            disabled={isLoading || !wethAmount || !dscAmount}
-                        >
-                            {isLoading && <span className="loading-spinner"></span>}
-                            {isLoading ? "Processing..." : "Deposit Collateral and Mint DSC"}
-                        </button>
-                        
-                        {message && (
-                            <div className={getMessageClass()}>
-                                {message}
-                            </div>
-                        )}
-                    </div>
+                    {message && (
+                        <div className={getMessageClass()}>
+                            {message}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

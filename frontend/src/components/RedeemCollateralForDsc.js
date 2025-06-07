@@ -47,6 +47,7 @@ export const RedeemCollateralForDsc = () => {
             );
             await redeemTx.wait();
 
+            setMessage('Collateral redeemed successfully!');
             refreshUserData();
         } catch (error) {
             console.error('Error redeeming collateral:', error);
