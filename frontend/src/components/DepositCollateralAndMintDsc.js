@@ -1,7 +1,7 @@
 /* global BigInt */
 import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
-import { parseEther, Contract } from "ethers";
+import { parseEther, Contract, formatEther } from "ethers";
 import { useUser } from '../Context';
 import './DepositCollateralAndMintDsc.css';
 
@@ -12,6 +12,7 @@ export const DepositCollateralAndMintDsc = () => {
     const [depositWethAmount, setDepositWethAmount] = useState("");
     const [mintDscAmount, setMintDscAmount] = useState("");
     const [combinedWethAmount, setCombinedWethAmount] = useState("");
+    const [estimatedDscAmount, setEstimatedDscAmount] = useState(0);
     
     const [message, setMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -28,10 +29,10 @@ export const DepositCollateralAndMintDsc = () => {
         return 'status-message processing';
     }
 
-    // Calculate 50% DSC amount for combined action
+    // Calculate DSC amount using actual WETH price from contract
     const calculateDscAmount = async (wethAmount) => {
         try {
-            if (!wethAmount) return 0;
+            if (!wethAmount || !contracts) return 0;
             
             const wethAmountWei = parseEther(wethAmount);
             const collateralValueInUsd = await contracts.dsce.getUsdValue(
@@ -41,12 +42,26 @@ export const DepositCollateralAndMintDsc = () => {
 
             // Calculate 50% of the USD value for DSC minting
             const dscAmount = collateralValueInUsd * BigInt(50) / BigInt(100);
-            return Number(dscAmount) / 1e18;
+            return Number(formatEther(dscAmount));
         } catch (error) {
             console.error('Error calculating DSC amount:', error);
             return 0;
         }
     };
+
+    // Update estimated DSC amount when combinedWethAmount changes
+    useEffect(() => {
+        const updateEstimation = async () => {
+            if (combinedWethAmount && contracts) {
+                const estimated = await calculateDscAmount(combinedWethAmount);
+                setEstimatedDscAmount(estimated);
+            } else {
+                setEstimatedDscAmount(0);
+            }
+        };
+
+        updateEstimation();
+    }, [combinedWethAmount, contracts]);
 
     // Individual deposit collateral function
     const depositCollateral = async () => {
@@ -112,7 +127,7 @@ export const DepositCollateralAndMintDsc = () => {
 
             const wethAmountWei = parseEther(combinedWethAmount);
             
-            // Calculate 50% DSC amount automatically
+            // Calculate 50% DSC amount automatically using actual price
             const dscAmount = await calculateDscAmount(combinedWethAmount);
             const dscAmountWei = parseEther(dscAmount.toString());
 
@@ -178,7 +193,7 @@ export const DepositCollateralAndMintDsc = () => {
                                     <button
                                         className='individual-action-button deposit-button'
                                         onClick={depositCollateral}
-                                        disabled={isLoading || !depositWethAmount}
+                                        disabled={isLoading}
                                     >
                                         {isLoading ? "Processing..." : "Deposit Collateral"}
                                     </button>
@@ -202,7 +217,7 @@ export const DepositCollateralAndMintDsc = () => {
                                     <button
                                         className='individual-action-button mint-button'
                                         onClick={mintDsc}
-                                        disabled={isLoading || !mintDscAmount}
+                                        disabled={isLoading}
                                     >
                                         {isLoading ? "Processing..." : "Mint DSC"}
                                     </button>
@@ -228,7 +243,7 @@ export const DepositCollateralAndMintDsc = () => {
                                 <div className='auto-calculation-display'>
                                     {combinedWethAmount && (
                                         <span className='calculation-text'>
-                                            Will mint: ~{(parseFloat(combinedWethAmount || 0) * 0.5 * 2000).toFixed(2)} DSC
+                                            Will mint: ~{estimatedDscAmount.toFixed(2)} DSC
                                             <small>(50% of collateral value)</small>
                                         </span>
                                     )}
@@ -236,7 +251,7 @@ export const DepositCollateralAndMintDsc = () => {
                                 <button
                                     className='main-action-button'
                                     onClick={depositCollateralAndMintDsc}
-                                    disabled={isLoading || !combinedWethAmount}
+                                    disabled={isLoading}
                                 >
                                     {isLoading && <span className="loading-spinner"></span>}
                                     {isLoading ? "Processing..." : "Deposit & Mint (50%)"}

@@ -22,7 +22,7 @@ const initialUserData = {
     dscBalance: '0',
     wethCollateralBalance: '0',
     totalCollateralValueInUsd: '0',
-    healthFactor: '0'
+    healthFactor: '0',
 };
 
 /**
@@ -105,31 +105,6 @@ export const UserProvider = ({children}) => {
             fetchUserData(userData.address, contracts);
         }
     };
-
-    /*
-    // Event listeners
-    useEffect(() => {
-        if (!window.ethereum) return;
-
-        const handleAccountsChanged = (accounts) => {
-            if (accounts.length === 0) {
-                disconnectWallet();
-            } else if (accounts[0] !== userData.address) {
-                connectWallet();
-            }
-        };
-
-        const handleChainChanged = () => window.location.reload();
-
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
-        window.ethereum.on('chainChanged', handleChainChanged);
-
-        return () => {
-            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-            window.ethereum.removeListener('chainChanged', handleChainChanged);
-        };
-    }, [userData.address, connectWallet, disconnectWallet]);
-    */
 
     const contextValue = {
         userData,
