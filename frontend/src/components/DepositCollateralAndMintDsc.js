@@ -32,7 +32,7 @@ export const DepositCollateralAndMintDsc = () => {
     // Calculate DSC amount using actual WETH price from contract
     const calculateDscAmount = async (wethAmount) => {
         try {
-            if (!wethAmount || !contracts) return 0;
+            //if (!wethAmount || !contracts) return 0;
             
             const wethAmountWei = parseEther(wethAmount);
             const collateralValueInUsd = await contracts.dsce.getUsdValue(

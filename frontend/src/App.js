@@ -4,6 +4,7 @@ import { WethConverter } from "./components/WethConverter";
 import { DepositCollateralAndMintDsc } from "./components/DepositCollateralAndMintDsc";
 import { DisplayUserData } from "./components/DisplayUserData";
 import { RedeemCollateralForDsc } from "./components/RedeemCollateralForDsc";
+import { Liquidation } from "./components/Liquidation";
 
 import "./App.css";
 
@@ -16,6 +17,7 @@ function App() {
                 <WethConverter />
                 <DepositCollateralAndMintDsc />
                 <RedeemCollateralForDsc />
+                <Liquidation />
             </div>
         </div>
     );
