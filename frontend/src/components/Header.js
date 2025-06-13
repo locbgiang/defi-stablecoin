@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUser } from '../Context';
+import { useUser } from '../contexts/Context';
 import './Header.css';
 
 export const Header = () => {

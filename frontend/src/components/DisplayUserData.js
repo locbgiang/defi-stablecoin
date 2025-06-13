@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"; 
 import { getContracts } from "../utils/ContractUtils";
 import { formatEther, parseEther, Contract } from "ethers";
-import { useUser } from "../Context";
+import { useUser } from "../contexts/Context";
 import './DisplayUserData.css';
 
 export const DisplayUserData = () => {

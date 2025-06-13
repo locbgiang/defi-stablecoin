@@ -1,5 +1,5 @@
 import {createContext, useState, useContext, useEffect, useCallback} from 'react';
-import {getContracts} from './utils/ContractUtils';
+import {getContracts} from '../utils/ContractUtils';
 export const UserContext = createContext();
 
 /**

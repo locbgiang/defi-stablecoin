@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, id } from "ethers";
-import { useUser } from '../Context';
+import { useUser } from '../contexts/Context';
 import './RedeemCollateralForDsc.css';
 
 export const RedeemCollateralForDsc = () => {

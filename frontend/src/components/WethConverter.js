@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { parseEther } from "ethers";
-import { useUser } from "../Context";
+import { useUser } from "../contexts/Context";
 import './WethConverter.css';
 
 export const WethConverter = () => { 

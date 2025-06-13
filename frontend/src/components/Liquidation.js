@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useUser } from '../Context';
+import { useUser } from '../contexts/Context';
 import { parseEther, formatEther } from 'ethers';
 import './Liquidation.css';
 

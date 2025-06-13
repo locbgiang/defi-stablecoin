@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { getContracts } from "../utils/ContractUtils";
 import { parseEther, Contract, formatEther } from "ethers";
-import { useUser } from '../Context';
+import { useUser } from '../contexts/Context';
 import './DepositCollateralAndMintDsc.css';
 
 export const DepositCollateralAndMintDsc = () => {
